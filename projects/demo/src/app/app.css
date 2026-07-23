@@ -1,0 +1,10 @@
+.demo-app {
+  max-width: 640px;
+  margin: 40px auto;
+  padding: 0 16px;
+  font-family: system-ui, sans-serif;
+}
+
+.demo-panel + .demo-panel {
+  margin-top: 16px;
+}
