@@ -1,0 +1,31 @@
+@if (isOpen()) {
+  <div class="cmdk-overlay" role="presentation" (click)="close()">
+    <div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Command palette" (click)="$event.stopPropagation()">
+      <input
+        #searchInput
+        class="cmdk-input"
+        type="text"
+        aria-label="Search commands"
+        [value]="query()"
+        (input)="onQueryChange($any($event.target).value)"
+      />
+      <div class="cmdk-list" role="listbox">
+        @for (group of groups(); track group.name) {
+          <div class="cmdk-group">
+            <div class="cmdk-group-label">{{ group.name }}</div>
+            @for (match of group.matches; track match.item.id) {
+              <div class="cmdk-item" role="option">
+                <span class="cmdk-item-label">{{ resolveLabel(match.item) }}</span>
+                @if (match.item.shortcut) {
+                  <span class="cmdk-shortcut">{{ match.item.shortcut }}</span>
+                }
+              </div>
+            }
+          </div>
+        } @empty {
+          <div class="cmdk-empty">No matching commands</div>
+        }
+      </div>
+    </div>
+  </div>
+}
