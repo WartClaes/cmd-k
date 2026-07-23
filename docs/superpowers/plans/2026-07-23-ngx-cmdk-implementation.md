@@ -89,7 +89,15 @@ version, that's expected on a fresh machine.
 
 - [ ] **Step 2: Scaffold the workspace in place**
 
+If a `.gitignore` already exists at the workspace root (it will, if you're
+running this in a worktree — one was committed on `main` before the
+worktree was cut, to ignore `.worktrees/`), move it aside first. `ng new`
+fails with `A merge conflicted on path "/.gitignore"` and aborts the whole
+scaffold if a `.gitignore` already exists (verified during planning) — it
+does not merge or skip, it stops before creating anything.
+
 ```bash
+[ -f .gitignore ] && mv .gitignore .gitignore.pre-existing
 npx -y @angular/cli@latest new cmd-k --directory=. --create-application=false --package-manager=npm --skip-git
 ```
 
@@ -99,7 +107,17 @@ Expected: a series of `CREATE` lines (`.prettierrc`, `README.md`,
 successfully.`. `--skip-git` is required — this directory already has its
 own git history (the design spec commit); do not let this command touch git.
 It tolerates the existing `docs/` folder and `.git` directory fine (verified
-during planning).
+during planning) as long as `.gitignore` was moved aside first.
+
+If `.gitignore.pre-existing` exists, merge its contents back into the
+newly-generated `.gitignore` and remove the temporary file:
+
+```bash
+if [ -f .gitignore.pre-existing ]; then
+  cat .gitignore.pre-existing >> .gitignore
+  rm .gitignore.pre-existing
+fi
+```
 
 - [ ] **Step 3: Generate the library**
 
