@@ -79,4 +79,67 @@ describe('CmdkPaletteComponent', () => {
     expect(document.activeElement).toBe(button);
     button.remove();
   });
+
+  it('selects the first result by default and highlights it', () => {
+    registry.register({ id: 'a', label: 'Alpha', execute: () => {} });
+    registry.register({ id: 'b', label: 'Beta', execute: () => {} });
+    pressOpenShortcut();
+    const selected = fixture.nativeElement.querySelector('.cmdk-item--selected');
+    expect(selected?.textContent).toContain('Alpha');
+  });
+
+  it('moves the selection down and up with arrow keys', () => {
+    registry.register({ id: 'a', label: 'Alpha', execute: () => {} });
+    registry.register({ id: 'b', label: 'Beta', execute: () => {} });
+    pressOpenShortcut();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-item--selected')?.textContent).toContain('Beta');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-item--selected')?.textContent).toContain('Alpha');
+  });
+
+  it('executes the selected command and closes on Enter', () => {
+    const execute = vi.fn();
+    registry.register({ id: 'a', label: 'Alpha', execute });
+    pressOpenShortcut();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.querySelector('.cmdk-overlay')).toBeNull();
+  });
+
+  it('closes without executing on Escape', () => {
+    const execute = vi.fn();
+    registry.register({ id: 'a', label: 'Alpha', execute });
+    pressOpenShortcut();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(execute).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.cmdk-overlay')).toBeNull();
+  });
+
+  it('executes a command when it is clicked', () => {
+    const execute = vi.fn();
+    registry.register({ id: 'a', label: 'Alpha', execute });
+    pressOpenShortcut();
+    const item: HTMLElement = fixture.nativeElement.querySelector('.cmdk-item');
+    item.click();
+    fixture.detectChanges();
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the empty state when no commands match the query', () => {
+    registry.register({ id: 'a', label: 'Alpha', execute: () => {} });
+    pressOpenShortcut();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+    input.value = 'zzz';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-empty')).not.toBeNull();
+  });
 });

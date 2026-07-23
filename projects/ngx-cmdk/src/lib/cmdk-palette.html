@@ -1,11 +1,19 @@
 @if (isOpen()) {
   <div class="cmdk-overlay" role="presentation" (click)="close()">
-    <div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Command palette" (click)="$event.stopPropagation()">
+    <div
+      class="cmdk-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
+      (click)="$event.stopPropagation()"
+      (keydown)="onKeydown($event)"
+    >
       <input
         #searchInput
         class="cmdk-input"
         type="text"
         aria-label="Search commands"
+        [attr.aria-activedescendant]="selectedCommand() ? 'cmdk-item-' + selectedCommand()!.id : null"
         [value]="query()"
         (input)="onQueryChange($any($event.target).value)"
       />
@@ -14,7 +22,14 @@
           <div class="cmdk-group">
             <div class="cmdk-group-label">{{ group.name }}</div>
             @for (match of group.matches; track match.item.id) {
-              <div class="cmdk-item" role="option">
+              <div
+                [id]="'cmdk-item-' + match.item.id"
+                class="cmdk-item"
+                [class.cmdk-item--selected]="match.item.id === selectedCommand()?.id"
+                role="option"
+                [attr.aria-selected]="match.item.id === selectedCommand()?.id"
+                (click)="runSelected(match.item)"
+              >
                 <span class="cmdk-item-label">{{ resolveLabel(match.item) }}</span>
                 @if (match.item.shortcut) {
                   <span class="cmdk-shortcut">{{ match.item.shortcut }}</span>
