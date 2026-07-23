@@ -127,12 +127,21 @@ Usage: mounted once, typically in the root `AppComponent` template —
   signal; `Enter` calls `execute()` on the selected command and closes the
   palette; `Escape` closes without executing.
 - **Rendering**: plain elements + CSS custom properties for the
-  overlay/backdrop, input, and list. Uses the native `<dialog>` element
-  (free focus-trapping and Escape handling from the browser) rather than a
-  custom fixed-position overlay + CDK.
-- **Accessibility**: `role="listbox"`/`role="option"`, `aria-activedescendant`
-  tracking `selectedIndex`, `aria-label` on the search input, focus returned
-  to the previously-focused element on close.
+  overlay/backdrop, input, and list. Uses a manually-managed overlay `<div>`
+  (conditionally rendered, with hand-rolled focus management and an
+  Escape/backdrop-click handler) rather than the native `<dialog>` element or
+  Angular CDK. This was revised during planning: jsdom (the test environment
+  this Angular version's default `vitest` unit-test builder uses) does not
+  implement `HTMLDialogElement.showModal()`, which would make every test
+  that opens the palette throw. The manual overlay produces the same
+  observable behavior (focus trapped in the panel, Escape closes, clicking
+  the backdrop closes, focus restored to the previously-focused element) but
+  is verifiable in the automated test suite.
+- **Accessibility**: `role="dialog"` + `aria-modal="true"` on the panel,
+  `role="listbox"`/`role="option"` on the results, `aria-activedescendant`
+  tracking the selected command, `aria-label` on the search input, focus
+  moved to the search input on open and returned to the previously-focused
+  element on close.
 
 ## Search matching
 
