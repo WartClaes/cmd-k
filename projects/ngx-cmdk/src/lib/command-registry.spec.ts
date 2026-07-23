@@ -69,3 +69,65 @@ describe('CommandRegistryService', () => {
     expect(service.commands().map((c) => c.id)).toEqual(['high', 'mid', 'low']);
   });
 });
+
+describe('CommandRegistryService shortcuts', () => {
+  let service: CommandRegistryService;
+
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, 'platform', { value: 'MacIntel', configurable: true });
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(CommandRegistryService);
+  });
+
+  it('executes the matching command when its shortcut is pressed', () => {
+    const execute = vi.fn();
+    service.register(makeCommand({ id: 'save', shortcut: 'mod+s', execute }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, bubbles: true, cancelable: true }));
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
+  it('prevents the default browser action when a shortcut matches', () => {
+    service.register(makeCommand({ id: 'save', shortcut: 'mod+s' }));
+    const event = new KeyboardEvent('keydown', { key: 's', metaKey: true, cancelable: true, bubbles: true });
+    document.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('ignores a bare-key shortcut while an editable element is focused', () => {
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    const execute = vi.fn();
+    service.register(makeCommand({ id: 'search', shortcut: 's', execute }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 's', bubbles: true }));
+    expect(execute).not.toHaveBeenCalled();
+    input.remove();
+  });
+
+  it('still fires a modifier shortcut while an editable element is focused', () => {
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    const execute = vi.fn();
+    service.register(makeCommand({ id: 'save', shortcut: 'mod+s', execute }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, bubbles: true }));
+    expect(execute).toHaveBeenCalledTimes(1);
+    input.remove();
+  });
+
+  it('logs and swallows an error thrown by execute()', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    service.register(
+      makeCommand({
+        id: 'broken',
+        shortcut: 'mod+b',
+        execute: () => {
+          throw new Error('boom');
+        },
+      }),
+    );
+    expect(() =>
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'b', metaKey: true, bubbles: true })),
+    ).not.toThrow();
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+});
