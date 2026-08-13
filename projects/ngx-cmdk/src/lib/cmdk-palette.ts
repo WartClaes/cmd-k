@@ -1,11 +1,11 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { resolveLabel, type ResolvedCommand } from './command.model';
 import { CMDK_CONFIG } from './cmdk-config';
 import { CommandRegistryService } from './command-registry';
 import { fuzzySearch } from './fuzzy-match';
 import { groupMatches } from './group-matches';
-import { matchesShortcut, parseShortcut } from './shortcut';
+import { isMacPlatform, matchesShortcut, parseShortcut } from './shortcut';
 
 @Component({
   selector: 'ngx-cmdk-palette',
@@ -17,7 +17,7 @@ export class CmdkPaletteComponent {
   private readonly registry = inject(CommandRegistryService);
   private readonly config = inject(CMDK_CONFIG);
   private readonly document = inject(DOCUMENT);
-  private readonly isMac = /mac/i.test(this.document.defaultView?.navigator.platform ?? '');
+  private readonly isMac = isMacPlatform(this.document.defaultView?.navigator.platform ?? '');
   private readonly openShortcut = parseShortcut(this.config.shortcut, this.isMac);
   private previouslyFocused: HTMLElement | null = null;
 
@@ -33,16 +33,25 @@ export class CmdkPaletteComponent {
   protected readonly resolveLabel = resolveLabel;
 
   constructor() {
-    this.document.addEventListener('keydown', (event) => {
+    const onOpenShortcut = (event: KeyboardEvent) => {
       if (matchesShortcut(event, this.openShortcut)) {
         event.preventDefault();
         this.open();
       }
-    });
+    };
+    this.document.addEventListener('keydown', onOpenShortcut);
+    inject(DestroyRef).onDestroy(() => this.document.removeEventListener('keydown', onOpenShortcut));
 
     effect(() => {
       if (this.isOpen()) {
         this.searchInput()?.nativeElement.focus();
+      }
+    });
+
+    effect(() => {
+      const count = this.flatMatches().length;
+      if (this.selectedIndex() >= count) {
+        this.selectedIndex.set(Math.max(0, count - 1));
       }
     });
   }
@@ -92,6 +101,12 @@ export class CmdkPaletteComponent {
         }
         break;
       }
+      case 'Tab':
+        // The search input is the panel's only focusable element, so trapping focus
+        // just means keeping it there — there's nowhere else inside the panel to move to.
+        event.preventDefault();
+        this.searchInput()?.nativeElement.focus();
+        break;
       default: {
         const command = this.registry.matchShortcut(event);
         if (command) {

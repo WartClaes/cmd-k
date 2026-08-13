@@ -66,7 +66,15 @@ window is scoped to the palette overlay:
 
 - **`mod` is a platform alias** (⌘ on Mac, Ctrl on Windows/Linux), so
   consumers don't need to branch on platform. Combos are expressed as
-  `"mod+s"`, `"mod+shift+p"`, etc.
+  `"mod+s"`, `"mod+shift+p"`, etc. A shortcut must have exactly one
+  non-modifier key — `"mod"` alone or `"mod+k+j"` both throw at registration
+  time rather than silently producing a shortcut that can never match a
+  keystroke.
+- **Matching is by physical key (`KeyboardEvent.code`), not the composed
+  character (`KeyboardEvent.key`)**, for letter and digit keys. This is what
+  makes `alt`-based letter shortcuts work on Mac (Option+C composes `"ç"` as
+  `event.key`, but `event.code` stays `"KeyC"`) and shifted-digit shortcuts
+  work on any layout (Shift+1 composes `"!"`, `event.code` stays `"Digit1"`).
 - **A command's `shortcut` only fires while the palette overlay is open.**
   The palette's own document-level `keydown` listener (used for
   ArrowUp/ArrowDown/Enter/Escape) also checks
@@ -77,7 +85,14 @@ window is scoped to the palette overlay:
 - **The only shortcut that is ever live regardless of overlay state is the
   configured open-shortcut** (default `mod+k`, set via
   `provideCmdk({ shortcut: ... })`). It is bound once via a document-level
-  listener owned by `CmdkPaletteComponent`.
+  listener owned by `CmdkPaletteComponent`, removed on the component's
+  destruction via `DestroyRef`.
+- **A command's `shortcut` cannot collide with the configured open-shortcut.**
+  `register()` throws if a command's parsed shortcut matches the
+  open-shortcut from `CMDK_CONFIG` — otherwise a command sharing that combo
+  would immediately reopen the palette the instant it executed and closed
+  it, since both the panel's keydown handler and the open-shortcut listener
+  see the same bubbling event.
 - **Every shortcut must include a real modifier** — `mod`, `ctrl`, `alt`, or
   `cmd`/`meta`. A bare key (`"s"`) or a shift-only combo (`"shift+p"`) is
   rejected: `register()` throws for a command shortcut, and `provideCmdk()`
@@ -113,10 +128,15 @@ class CommandRegistryService {
 - Internally backed by a `signal` holding a `Map<string, Command>`;
   `commands` is a `computed` that exposes the values as an array, sorted by
   `priority` (descending) then insertion order.
+- **`id` generation** prefers `crypto.randomUUID()` but falls back to a
+  `Date.now()`/`Math.random()`-based id if it's unavailable or throws (e.g.
+  an insecure browsing context, where `randomUUID()` is spec-restricted) —
+  `register()` should never fail just because the caller omitted `id`.
 - `register(command)`:
   1. Resolves or generates the `id`.
-  2. Throws if the `shortcut` lacks a real modifier, or if the `id` or
-     `shortcut` collides with an existing entry.
+  2. Throws if the `shortcut` lacks a real modifier, doesn't have exactly
+     one key, collides with the configured open-shortcut, or collides with
+     the `id`/`shortcut` of an already-registered command.
   3. Inserts into the map; parses the `shortcut` (if any) so
      `matchShortcut()` can find it.
   4. Returns an `unregister` closure that removes the entry and its shortcut
@@ -146,9 +166,17 @@ Usage: mounted once, typically in the root `AppComponent` template —
   fall into a default "Other" bucket) and rendered as sections with headers.
 - **Keyboard navigation**: `ArrowUp`/`ArrowDown` move a `selectedIndex`
   signal; `Enter` calls `execute()` on the selected command and closes the
-  palette; `Escape` closes without executing. Any other keydown on the panel
-  is checked against `CommandRegistryService.matchShortcut()`; a match
-  executes that command and closes the palette, the same as Enter.
+  palette; `Escape` closes without executing; `Tab` is captured and refocuses
+  the search input rather than leaving the panel — since the search input is
+  the panel's only focusable element, this is what "trapping" focus means
+  here. Any other keydown on the panel is checked against
+  `CommandRegistryService.matchShortcut()`; a match executes that command and
+  closes the palette, the same as Enter.
+- **Selection clamping**: an `effect` watches the filtered/grouped result
+  count and clamps `selectedIndex` back into range whenever it shrinks —
+  not just on a query change, but also if a command backing the current
+  selection is unregistered by some other part of the app while the palette
+  is still open.
 - **Rendering**: plain elements + CSS custom properties for the
   overlay/backdrop, input, and list. Uses a manually-managed overlay `<div>`
   (conditionally rendered, with hand-rolled focus management and an
@@ -185,9 +213,11 @@ A lightweight, built-in fuzzy matcher with zero external dependencies:
 - **Duplicate `id` or `shortcut` at `register()` time**: throws synchronously
   with a descriptive `Error` (e.g. `Command with id "save" is already
   registered`). Fail-fast, since this is a programming mistake.
-- **Shortcut without a real modifier at `register()`/`provideCmdk()` time**:
-  throws synchronously (see Shortcut binding above) rather than registering
-  a shortcut that could never safely fire.
+- **Malformed shortcut at `register()`/`provideCmdk()` time** (missing
+  modifier, missing key, more than one key, or colliding with the
+  open-shortcut): throws synchronously (see Shortcut binding above) rather
+  than registering a shortcut that could never safely fire or would fight
+  the palette's own open-shortcut.
 - **Double-unregister**: calling the teardown function twice is a safe
   no-op, since `ngOnDestroy` and manual cleanup paths could plausibly race
   or double-call.
@@ -196,18 +226,23 @@ A lightweight, built-in fuzzy matcher with zero external dependencies:
 
 - **`CommandRegistryService`**: register/unregister, duplicate `id` throws,
   duplicate `shortcut` throws (including equivalent combos in a different
-  token order), shortcut without a modifier throws, double-unregister is a
-  no-op, `commands()` reflects priority/insertion ordering,
-  `matchShortcut()` returns the right command or `undefined`.
+  token order), shortcut without a modifier/without exactly one key throws,
+  shortcut colliding with the open-shortcut throws, id generation falls back
+  when `crypto.randomUUID()` is unavailable, double-unregister is a no-op,
+  `commands()` reflects priority/insertion ordering, `matchShortcut()`
+  returns the right command or `undefined` (including alt/shift combos
+  matched by physical key code rather than composed character).
 - **Fuzzy matcher**: pure function, table-driven cases (exact match, partial
   match, keyword-only match, no match, relative scoring/ordering).
-- **`provideCmdk()`**: default/override config, throws when given a
-  shortcut without a modifier.
+- **`provideCmdk()`**: default/override config, throws when given a shortcut
+  without a modifier or without exactly one key.
 - **`CmdkPaletteComponent`**: `TestBed` component tests — opening via the
   configured open-shortcut, filtering as `query` changes, arrow-key
   navigation moves selection, `Enter` executes and closes, `Escape` closes
-  without executing, a registered command's shortcut executes and closes
-  while open, that same shortcut does nothing while closed, grouped
+  without executing, `Tab` keeps focus on the search input, selection clamps
+  when a command disappears mid-session, a registered command's shortcut
+  executes and closes while open, that same shortcut does nothing while
+  closed, the open-shortcut listener is removed on destroy, grouped
   rendering order.
 - **Demo app**: manual sanity-check surface during development — sample
   commands (some grouped, some with shortcuts, one that throws) to click

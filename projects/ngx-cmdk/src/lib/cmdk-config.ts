@@ -1,5 +1,5 @@
 import { EnvironmentProviders, InjectionToken, makeEnvironmentProviders } from '@angular/core';
-import { hasRequiredModifier } from './shortcut';
+import { hasExactlyOneKey, hasRequiredModifier } from './shortcut';
 
 export interface CmdkConfig {
   shortcut: string;
@@ -15,6 +15,9 @@ export function provideCmdk(config: Partial<CmdkConfig> = {}): EnvironmentProvid
   const merged = { ...DEFAULT_CMDK_CONFIG, ...config };
   if (!hasRequiredModifier(merged.shortcut)) {
     throw new Error(`Shortcut "${merged.shortcut}" must include a modifier (mod, ctrl, alt, or cmd)`);
+  }
+  if (!hasExactlyOneKey(merged.shortcut)) {
+    throw new Error(`Shortcut "${merged.shortcut}" must have exactly one key in addition to its modifier(s)`);
   }
   return makeEnvironmentProviders([{ provide: CMDK_CONFIG, useValue: merged }]);
 }

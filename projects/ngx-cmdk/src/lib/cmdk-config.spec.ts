@@ -23,6 +23,18 @@ describe('provideCmdk', () => {
       'Shortcut "shift+k" must include a modifier (mod, ctrl, alt, or cmd)',
     );
   });
+
+  it('throws when given a shortcut with no key', () => {
+    expect(() => provideCmdk({ shortcut: 'mod' })).toThrow(
+      'Shortcut "mod" must have exactly one key in addition to its modifier(s)',
+    );
+  });
+
+  it('throws when given a shortcut with more than one key', () => {
+    expect(() => provideCmdk({ shortcut: 'mod+k+j' })).toThrow(
+      'Shortcut "mod+k+j" must have exactly one key in addition to its modifier(s)',
+    );
+  });
 });
 
 describe('CMDK_CONFIG default factory', () => {

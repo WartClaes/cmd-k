@@ -1,4 +1,4 @@
-import { hasRequiredModifier, matchesShortcut, parseShortcut } from './shortcut';
+import { hasExactlyOneKey, hasRequiredModifier, matchesShortcut, parseShortcut } from './shortcut';
 
 describe('parseShortcut', () => {
   it('resolves "mod" to meta on Mac', () => {
@@ -29,20 +29,34 @@ describe('parseShortcut', () => {
 describe('matchesShortcut', () => {
   it('matches when the key and all modifier flags line up', () => {
     const parsed = parseShortcut('mod+k', true);
-    const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true });
+    const event = new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', metaKey: true });
     expect(matchesShortcut(event, parsed)).toBe(true);
   });
 
   it('does not match when an extra modifier is held', () => {
     const parsed = parseShortcut('mod+k', true);
-    const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, shiftKey: true });
+    const event = new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', metaKey: true, shiftKey: true });
     expect(matchesShortcut(event, parsed)).toBe(false);
   });
 
   it('does not match a different key', () => {
     const parsed = parseShortcut('mod+k', true);
-    const event = new KeyboardEvent('keydown', { key: 'j', metaKey: true });
+    const event = new KeyboardEvent('keydown', { key: 'j', code: 'KeyJ', metaKey: true });
     expect(matchesShortcut(event, parsed)).toBe(false);
+  });
+
+  it('matches a letter shortcut by physical key code, regardless of the composed character', () => {
+    // On macOS, Option+C composes "ç" as event.key while event.code stays "KeyC".
+    const parsed = parseShortcut('alt+c', true);
+    const event = new KeyboardEvent('keydown', { key: 'ç', code: 'KeyC', altKey: true });
+    expect(matchesShortcut(event, parsed)).toBe(true);
+  });
+
+  it('matches a shifted digit shortcut by physical key code, regardless of the composed character', () => {
+    // Shift+1 composes "!" as event.key on a US layout while event.code stays "Digit1".
+    const parsed = parseShortcut('mod+shift+1', true);
+    const event = new KeyboardEvent('keydown', { key: '!', code: 'Digit1', metaKey: true, shiftKey: true });
+    expect(matchesShortcut(event, parsed)).toBe(true);
   });
 });
 
@@ -63,5 +77,19 @@ describe('hasRequiredModifier', () => {
 
   it('returns false for a shift-only combo', () => {
     expect(hasRequiredModifier('shift+p')).toBe(false);
+  });
+});
+
+describe('hasExactlyOneKey', () => {
+  it('returns true for a single key with modifiers', () => {
+    expect(hasExactlyOneKey('mod+shift+p')).toBe(true);
+  });
+
+  it('returns false when no key token is present', () => {
+    expect(hasExactlyOneKey('mod')).toBe(false);
+  });
+
+  it('returns false when more than one key token is present', () => {
+    expect(hasExactlyOneKey('mod+k+j')).toBe(false);
   });
 });

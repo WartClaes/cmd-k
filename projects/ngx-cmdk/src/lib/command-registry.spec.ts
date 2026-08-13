@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { CommandRegistryService } from './command-registry';
 import type { Command } from './command.model';
+import { provideCmdk } from './cmdk-config';
 
 function makeCommand(overrides: Partial<Command> = {}): Command {
   return { label: 'Test Command', execute: () => {}, ...overrides };
@@ -80,6 +81,46 @@ describe('CommandRegistryService', () => {
       'Shortcut "shift+p" must include a modifier (mod, ctrl, alt, or cmd)',
     );
   });
+
+  it('throws when registering a shortcut with no key', () => {
+    expect(() => service.register(makeCommand({ id: 'search', shortcut: 'mod' }))).toThrow(
+      'Shortcut "mod" must have exactly one key in addition to its modifier(s)',
+    );
+  });
+
+  it('throws when registering a shortcut with more than one key', () => {
+    expect(() => service.register(makeCommand({ id: 'search', shortcut: 'mod+k+j' }))).toThrow(
+      'Shortcut "mod+k+j" must have exactly one key in addition to its modifier(s)',
+    );
+  });
+
+  it('throws when registering a shortcut that collides with the default open-shortcut', () => {
+    expect(() => service.register(makeCommand({ id: 'x', shortcut: 'mod+k' }))).toThrow(
+      'Shortcut "mod+k" collides with the configured open-shortcut "mod+k"',
+    );
+  });
+
+  it('generates an id even when crypto.randomUUID is unavailable (e.g. an insecure context)', () => {
+    const randomUUIDSpy = vi.spyOn(crypto, 'randomUUID').mockImplementation(() => {
+      throw new Error('randomUUID is not available in this context');
+    });
+    try {
+      service.register(makeCommand());
+      expect(service.commands()[0].id).toBeTruthy();
+    } finally {
+      randomUUIDSpy.mockRestore();
+    }
+  });
+});
+
+describe('CommandRegistryService open-shortcut collision with a custom config', () => {
+  it('collides against a non-default configured open-shortcut', () => {
+    TestBed.configureTestingModule({ providers: [provideCmdk({ shortcut: 'ctrl+p' })] });
+    const service = TestBed.inject(CommandRegistryService);
+    expect(() => service.register(makeCommand({ id: 'x', shortcut: 'ctrl+p' }))).toThrow(
+      'Shortcut "ctrl+p" collides with the configured open-shortcut "ctrl+p"',
+    );
+  });
 });
 
 describe('CommandRegistryService.execute()', () => {
@@ -121,13 +162,13 @@ describe('CommandRegistryService.matchShortcut()', () => {
 
   it('returns the resolved command matching a keyboard event', () => {
     service.register(makeCommand({ id: 'save', shortcut: 'mod+s' }));
-    const event = new KeyboardEvent('keydown', { key: 's', metaKey: true });
+    const event = new KeyboardEvent('keydown', { key: 's', code: 'KeyS', metaKey: true });
     expect(service.matchShortcut(event)?.id).toBe('save');
   });
 
   it('returns undefined when no registered shortcut matches', () => {
     service.register(makeCommand({ id: 'save', shortcut: 'mod+s' }));
-    const event = new KeyboardEvent('keydown', { key: 'j', metaKey: true });
+    const event = new KeyboardEvent('keydown', { key: 'j', code: 'KeyJ', metaKey: true });
     expect(service.matchShortcut(event)).toBeUndefined();
   });
 

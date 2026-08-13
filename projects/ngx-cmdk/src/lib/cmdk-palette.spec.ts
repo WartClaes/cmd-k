@@ -24,7 +24,7 @@ describe('CmdkPaletteComponent', () => {
   });
 
   function pressOpenShortcut(): void {
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', metaKey: true, bubbles: true }));
     fixture.detectChanges();
   }
 
@@ -148,7 +148,7 @@ describe('CmdkPaletteComponent', () => {
     registry.register({ id: 'save', label: 'Save', shortcut: 'mod+s', execute });
     pressOpenShortcut();
     const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
-    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, bubbles: true }));
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS', metaKey: true, bubbles: true }));
     fixture.detectChanges();
     expect(execute).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.querySelector('.cmdk-overlay')).toBeNull();
@@ -157,8 +157,39 @@ describe('CmdkPaletteComponent', () => {
   it('does not execute a registered command shortcut while the overlay is closed', () => {
     const execute = vi.fn();
     registry.register({ id: 'save', label: 'Save', shortcut: 'mod+s', execute });
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS', metaKey: true, bubbles: true }));
     fixture.detectChanges();
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  it('keeps focus on the search input when Tab is pressed, trapping focus in the panel', () => {
+    pressOpenShortcut();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(input);
+  });
+
+  it('clamps the selection when a registered command disappears while the overlay is open', () => {
+    registry.register({ id: 'a', label: 'Alpha', execute: () => {} });
+    const unregisterB = registry.register({ id: 'b', label: 'Beta', execute: () => {} });
+    pressOpenShortcut();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-item--selected')?.textContent).toContain('Beta');
+
+    unregisterB();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.cmdk-item--selected')?.textContent).toContain('Alpha');
+  });
+
+  it('removes the open-shortcut listener when the component is destroyed', () => {
+    const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
+    fixture.destroy();
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+    removeEventListenerSpy.mockRestore();
   });
 });
