@@ -31,7 +31,7 @@ constructor() {
   registry.register({
     label: 'Go to Settings',
     shortcut: 'mod+s',
-    execute: () => this.router.navigate(['/settings']),
+    execute: () => { this.router.navigate(['/settings']); },
   });
 }
 ```

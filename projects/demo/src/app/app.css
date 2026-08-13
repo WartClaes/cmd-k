@@ -28,16 +28,6 @@
   gap: 16px;
 }
 
-.demo-code {
-  margin: 0;
-  padding: 12px 16px;
-  background: #1e1e1e;
-  color: #e0e0e0;
-  border-radius: 8px;
-  overflow-x: auto;
-  font-size: 0.9em;
-}
-
 .demo-footer {
   padding-top: 16px;
   border-top: 1px solid #ddd;

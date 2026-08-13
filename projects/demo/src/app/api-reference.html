@@ -1,4 +1,4 @@
-<section class="api-section">
+<section class="doc-section">
   <h2>API reference</h2>
 
   <article>
@@ -7,7 +7,7 @@
       The shape every registered command has. Only <code>label</code> and
       <code>execute</code> are required.
     </p>
-    <pre class="api-code"><code>{{ commandSnippet }}</code></pre>
+    <pre class="doc-code"><code>{{ commandSnippet }}</code></pre>
   </article>
 
   <article>
@@ -22,7 +22,7 @@
       <code>shortcut</code> throws immediately, rather than silently
       overriding the earlier registration.
     </p>
-    <pre class="api-code"><code>{{ registrySnippet }}</code></pre>
+    <pre class="doc-code"><code>{{ registrySnippet }}</code></pre>
   </article>
 
   <article>
@@ -41,7 +41,7 @@
       Configures the palette's open shortcut app-wide. Call it once in
       <code>app.config.ts</code>.
     </p>
-    <pre class="api-code"><code>{{ provideCmdkSnippet }}</code></pre>
+    <pre class="doc-code"><code>{{ provideCmdkSnippet }}</code></pre>
   </article>
 
   <article>
@@ -54,9 +54,10 @@
       <li>
         Every shortcut needs a real modifier (<code>mod</code>,
         <code>ctrl</code>, <code>alt</code>, or <code>cmd</code>/
-        <code>meta</code>) plus exactly one key, e.g.
-        <code>"mod+s"</code> or <code>"mod+shift+p"</code>. A bare key or a
-        shift-only combo is rejected at registration time.
+        <code>meta</code>) plus exactly one key — a single letter or digit
+        (a-z or 0-9), e.g. <code>"mod+s"</code> or <code>"mod+shift+p"</code>.
+        A bare key, a shift-only combo, or a key that isn't a single
+        letter/digit is rejected at registration time.
       </li>
       <li>
         A command's shortcut only fires while the palette is open — press

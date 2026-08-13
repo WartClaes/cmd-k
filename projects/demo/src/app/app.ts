@@ -19,4 +19,13 @@ export class App {
   protected readonly providerSnippet = `providers: [provideCmdk()]`;
 
   protected readonly templateSnippet = '<ngx-cmdk-palette />';
+
+  protected readonly registerSnippet = `constructor() {
+  const registry = inject(CommandRegistryService);
+  registry.register({
+    label: 'Go to Settings',
+    shortcut: 'mod+s',
+    execute: () => { this.router.navigate(['/settings']); },
+  });
+}`;
 }

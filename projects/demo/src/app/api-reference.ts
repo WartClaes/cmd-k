@@ -15,12 +15,12 @@ export class ApiReference {
   keywords?: string[];            // extra search terms, not displayed
   group?: string;                 // section header, e.g. "Navigation"
   shortcut?: string;              // e.g. "mod+s", "mod+shift+p"
-  priority?: number;               // higher sorts first within its group
+  priority?: number;    // higher sorts first, but only when the search query is empty
 }`;
 
   protected readonly registrySnippet = `class CommandRegistryService {
   register(command: Command): () => void;       // returns an unregister fn
-  readonly commands: Signal<readonly Command[]>; // all registered, read-only
+  readonly commands: Signal<readonly ResolvedCommand[]>; // all registered, read-only
 }`;
 
   protected readonly provideCmdkSnippet = `function provideCmdk(config?: { shortcut: string }): EnvironmentProviders;
