@@ -35,6 +35,12 @@ describe('provideCmdk', () => {
       'Shortcut "mod+k+j" must have exactly one key in addition to its modifier(s)',
     );
   });
+
+  it('throws when given a shortcut with a multi-character key (e.g. a missing "+")', () => {
+    expect(() => provideCmdk({ shortcut: 'mod+kj' })).toThrow(
+      'Shortcut "mod+kj" must have exactly one key in addition to its modifier(s)',
+    );
+  });
 });
 
 describe('CMDK_CONFIG default factory', () => {

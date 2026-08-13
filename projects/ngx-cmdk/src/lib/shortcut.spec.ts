@@ -58,6 +58,12 @@ describe('matchesShortcut', () => {
     const event = new KeyboardEvent('keydown', { key: '!', code: 'Digit1', metaKey: true, shiftKey: true });
     expect(matchesShortcut(event, parsed)).toBe(true);
   });
+
+  it('matches a digit shortcut pressed on the numeric keypad', () => {
+    const parsed = parseShortcut('mod+1', true);
+    const event = new KeyboardEvent('keydown', { key: '1', code: 'Numpad1', metaKey: true });
+    expect(matchesShortcut(event, parsed)).toBe(true);
+  });
 });
 
 describe('hasRequiredModifier', () => {
@@ -91,6 +97,10 @@ describe('hasExactlyOneKey', () => {
 
   it('returns false when more than one key token is present', () => {
     expect(hasExactlyOneKey('mod+k+j')).toBe(false);
+  });
+
+  it('returns false when the key token is more than one character (e.g. a missing "+")', () => {
+    expect(hasExactlyOneKey('mod+kj')).toBe(false);
   });
 });
 

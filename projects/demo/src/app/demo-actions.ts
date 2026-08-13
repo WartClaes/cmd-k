@@ -6,7 +6,6 @@ import { DemoActivityLog } from './demo-activity-log';
   selector: 'app-demo-actions',
   imports: [],
   templateUrl: './demo-actions.html',
-  styleUrl: './demo-actions.css',
 })
 export class DemoActions {
   private readonly registry = inject(CommandRegistryService);

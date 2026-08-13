@@ -94,6 +94,12 @@ describe('CommandRegistryService', () => {
     );
   });
 
+  it('throws when registering a shortcut with a multi-character key (e.g. a missing "+")', () => {
+    expect(() => service.register(makeCommand({ id: 'search', shortcut: 'mod+kj' }))).toThrow(
+      'Shortcut "mod+kj" must have exactly one key in addition to its modifier(s)',
+    );
+  });
+
   it('throws when registering a shortcut that collides with the default open-shortcut', () => {
     expect(() => service.register(makeCommand({ id: 'x', shortcut: 'mod+k' }))).toThrow(
       'Shortcut "mod+k" collides with the configured open-shortcut "mod+k"',
