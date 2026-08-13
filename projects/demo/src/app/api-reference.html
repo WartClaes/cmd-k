@@ -1,0 +1,74 @@
+<section class="doc-section">
+  <h2>API reference</h2>
+
+  <article>
+    <h3>Command</h3>
+    <p>
+      The shape every registered command has. Only <code>label</code> and
+      <code>execute</code> are required.
+    </p>
+    <pre class="doc-code"><code>{{ commandSnippet }}</code></pre>
+  </article>
+
+  <article>
+    <h3>CommandRegistryService</h3>
+    <p>
+      Injectable anywhere (<code>providedIn: 'root'</code>). Call
+      <code>register()</code> from any component, directive, guard, or
+      service — registration isn't confined to a single root location. It
+      returns an unregister function; pass it to
+      <code>DestroyRef.onDestroy()</code> for automatic cleanup.
+      Registering a duplicate <code>id</code> or a colliding
+      <code>shortcut</code> throws immediately, rather than silently
+      overriding the earlier registration.
+    </p>
+    <pre class="doc-code"><code>{{ registrySnippet }}</code></pre>
+  </article>
+
+  <article>
+    <h3>CmdkPaletteComponent</h3>
+    <p>
+      Selector <code>ngx-cmdk-palette</code>. Mount it once, typically in
+      your root component's template. It reads live from
+      <code>CommandRegistryService</code>, so it reflects whatever is
+      currently registered with no extra wiring.
+    </p>
+  </article>
+
+  <article>
+    <h3>provideCmdk()</h3>
+    <p>
+      Configures the palette's open shortcut app-wide. Call it once in
+      <code>app.config.ts</code>.
+    </p>
+    <pre class="doc-code"><code>{{ provideCmdkSnippet }}</code></pre>
+  </article>
+
+  <article>
+    <h3>Shortcut rules</h3>
+    <ul>
+      <li>
+        <code>mod</code> is a platform alias — ⌘ on Mac, Ctrl on
+        Windows/Linux — so you don't need to branch on platform.
+      </li>
+      <li>
+        Every shortcut needs a real modifier (<code>mod</code>,
+        <code>ctrl</code>, <code>alt</code>, or <code>cmd</code>/
+        <code>meta</code>) plus exactly one key — a single letter or digit
+        (a-z or 0-9), e.g. <code>"mod+s"</code> or <code>"mod+shift+p"</code>.
+        A bare key, a shift-only combo, or a key that isn't a single
+        letter/digit is rejected at registration time.
+      </li>
+      <li>
+        A command's shortcut only fires while the palette is open — press
+        it, and that command runs immediately, the same as selecting it and
+        pressing Enter. The one shortcut that's always live, even when the
+        palette is closed, is the configured open-shortcut itself.
+      </li>
+      <li>
+        Shortcut hints render with the correct symbol for your OS — ⌘ on
+        Mac, Ctrl elsewhere — automatically.
+      </li>
+    </ul>
+  </article>
+</section>

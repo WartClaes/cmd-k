@@ -1,64 +1,55 @@
-# NgxCmdk
+# ngx-cmdk
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.0.
+A Cmd/Ctrl+K style command palette for Angular. Any component, directive,
+guard, or service anywhere in your app can register commands via dependency
+injection — no single root location required.
 
-## Code scaffolding
+**[Live docs & demo →](https://wartclaes.github.io/cmd-k/)**
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Install
 
 ```bash
-ng generate --help
+npm install ngx-cmdk
 ```
 
-## Building
+## Quick start
 
-To build the library, run:
+```ts
+// app.config.ts
+providers: [provideCmdk()]
+```
+
+```html
+<!-- app.html, mounted once -->
+<ngx-cmdk-palette />
+```
+
+```ts
+// anywhere in your app
+constructor() {
+  const registry = inject(CommandRegistryService);
+  registry.register({
+    label: 'Go to Settings',
+    shortcut: 'mod+s',
+    execute: () => { this.router.navigate(['/settings']); },
+  });
+}
+```
+
+See the [live docs](https://wartclaes.github.io/cmd-k/) for the full guide
+and API reference.
+
+## Development
+
+This is an Angular CLI workspace with two projects: `projects/ngx-cmdk` (the
+library) and `projects/demo` (a demo app that also serves as the docs site).
 
 ```bash
-ng build ngx-cmdk
+npx ng build ngx-cmdk   # build the library first — the demo app needs it
+npx ng serve demo       # then serve the demo/docs app locally
+npx ng test ngx-cmdk    # run the library's unit tests
 ```
 
-This command will compile your project, and the build artifacts will be placed in the `dist/` directory.
+## License
 
-### Publishing the Library
-
-Once the project is built, you can publish your library by following these steps:
-
-1. Navigate to the `dist` directory:
-
-   ```bash
-   cd dist/ngx-cmdk
-   ```
-
-2. Run the `npm publish` command to publish your library to the npm registry:
-   ```bash
-   npm publish
-   ```
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+MIT

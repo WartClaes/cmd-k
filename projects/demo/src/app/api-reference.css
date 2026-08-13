@@ -1,0 +1,9 @@
+.doc-section article {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-section h3 {
+  margin: 0;
+}

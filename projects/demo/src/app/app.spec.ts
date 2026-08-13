@@ -13,9 +13,9 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('renders the demo heading', () => {
+  it('renders the page heading', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain('ngx-cmdk demo');
+    expect(fixture.nativeElement.querySelector('h1')?.textContent).toBe('ngx-cmdk');
   });
 });
