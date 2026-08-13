@@ -68,9 +68,49 @@ describe('CommandRegistryService', () => {
     service.register(makeCommand({ id: 'mid', priority: 5 }));
     expect(service.commands().map((c) => c.id)).toEqual(['high', 'mid', 'low']);
   });
+
+  it('throws when registering a shortcut without a modifier', () => {
+    expect(() => service.register(makeCommand({ id: 'search', shortcut: 's' }))).toThrow(
+      'Shortcut "s" must include a modifier (mod, ctrl, alt, or cmd)',
+    );
+  });
+
+  it('throws when registering a shift-only shortcut', () => {
+    expect(() => service.register(makeCommand({ id: 'search', shortcut: 'shift+p' }))).toThrow(
+      'Shortcut "shift+p" must include a modifier (mod, ctrl, alt, or cmd)',
+    );
+  });
 });
 
-describe('CommandRegistryService shortcuts', () => {
+describe('CommandRegistryService.execute()', () => {
+  let service: CommandRegistryService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(CommandRegistryService);
+  });
+
+  it('logs and swallows an error thrown by execute()', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const command = { ...makeCommand({ id: 'broken' }), id: 'broken', execute: () => {
+      throw new Error('boom');
+    } };
+    expect(() => service.execute(command)).not.toThrow();
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('logs and swallows a rejected promise returned by execute()', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const command = { ...makeCommand({ id: 'broken' }), id: 'broken', execute: () => Promise.reject(new Error('boom')) };
+    service.execute(command);
+    await Promise.resolve();
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+});
+
+describe('CommandRegistryService.matchShortcut()', () => {
   let service: CommandRegistryService;
 
   beforeEach(() => {
@@ -79,55 +119,22 @@ describe('CommandRegistryService shortcuts', () => {
     service = TestBed.inject(CommandRegistryService);
   });
 
-  it('executes the matching command when its shortcut is pressed', () => {
-    const execute = vi.fn();
-    service.register(makeCommand({ id: 'save', shortcut: 'mod+s', execute }));
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, bubbles: true, cancelable: true }));
-    expect(execute).toHaveBeenCalledTimes(1);
-  });
-
-  it('prevents the default browser action when a shortcut matches', () => {
+  it('returns the resolved command matching a keyboard event', () => {
     service.register(makeCommand({ id: 'save', shortcut: 'mod+s' }));
-    const event = new KeyboardEvent('keydown', { key: 's', metaKey: true, cancelable: true, bubbles: true });
-    document.dispatchEvent(event);
-    expect(event.defaultPrevented).toBe(true);
+    const event = new KeyboardEvent('keydown', { key: 's', metaKey: true });
+    expect(service.matchShortcut(event)?.id).toBe('save');
   });
 
-  it('ignores a bare-key shortcut while an editable element is focused', () => {
-    const input = document.createElement('input');
-    document.body.appendChild(input);
-    const execute = vi.fn();
-    service.register(makeCommand({ id: 'search', shortcut: 's', execute }));
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 's', bubbles: true }));
-    expect(execute).not.toHaveBeenCalled();
-    input.remove();
+  it('returns undefined when no registered shortcut matches', () => {
+    service.register(makeCommand({ id: 'save', shortcut: 'mod+s' }));
+    const event = new KeyboardEvent('keydown', { key: 'j', metaKey: true });
+    expect(service.matchShortcut(event)).toBeUndefined();
   });
 
-  it('still fires a modifier shortcut while an editable element is focused', () => {
-    const input = document.createElement('input');
-    document.body.appendChild(input);
-    const execute = vi.fn();
-    service.register(makeCommand({ id: 'save', shortcut: 'mod+s', execute }));
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, bubbles: true }));
-    expect(execute).toHaveBeenCalledTimes(1);
-    input.remove();
-  });
-
-  it('logs and swallows an error thrown by execute()', () => {
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    service.register(
-      makeCommand({
-        id: 'broken',
-        shortcut: 'mod+b',
-        execute: () => {
-          throw new Error('boom');
-        },
-      }),
+  it('treats equivalent modifier orderings as the same shortcut for collision detection', () => {
+    service.register(makeCommand({ id: 'save', shortcut: 'mod+shift+p' }));
+    expect(() => service.register(makeCommand({ id: 'other', shortcut: 'shift+mod+p' }))).toThrow(
+      'Shortcut "shift+mod+p" is already registered by command "save"',
     );
-    expect(() =>
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'b', metaKey: true, bubbles: true })),
-    ).not.toThrow();
-    expect(consoleError).toHaveBeenCalled();
-    consoleError.mockRestore();
   });
 });

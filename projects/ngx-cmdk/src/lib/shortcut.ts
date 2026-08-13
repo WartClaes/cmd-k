@@ -62,10 +62,11 @@ export function matchesShortcut(event: KeyboardEvent, parsed: ParsedShortcut): b
   );
 }
 
-export function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-  const tag = target.tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || !!target.isContentEditable;
+const REQUIRED_MODIFIER_TOKENS = new Set(['mod', 'ctrl', 'control', 'meta', 'cmd', 'command', 'alt', 'option']);
+
+export function hasRequiredModifier(shortcut: string): boolean {
+  return shortcut
+    .split('+')
+    .map((token) => token.trim().toLowerCase())
+    .some((token) => REQUIRED_MODIFIER_TOKENS.has(token));
 }

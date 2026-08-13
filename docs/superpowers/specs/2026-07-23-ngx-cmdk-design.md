@@ -61,29 +61,44 @@ Decisions:
 
 ## Shortcut binding
 
-`shortcut` is a real, live keybinding, not just a display hint:
+`shortcut` is a real keybinding, not just a display hint, but its live
+window is scoped to the palette overlay:
 
 - **`mod` is a platform alias** (⌘ on Mac, Ctrl on Windows/Linux), so
   consumers don't need to branch on platform. Combos are expressed as
   `"mod+s"`, `"mod+shift+p"`, etc.
-- **Pressing the combo executes the command directly**, whether or not the
-  palette is open. It also renders as hint text next to the command in
-  palette search results.
-- **Conflict handling matches the ID rule.** If a second command registers a
-  `shortcut` string that's already active, `register()` throws immediately
+- **A command's `shortcut` only fires while the palette overlay is open.**
+  The palette's own document-level `keydown` listener (used for
+  ArrowUp/ArrowDown/Enter/Escape) also checks
+  `CommandRegistryService.matchShortcut(event)`; on a match it executes the
+  command and closes the overlay, the same as selecting it and pressing
+  Enter. Pressing the combo while the overlay is closed does nothing — it
+  still renders as hint text next to the command in palette search results.
+- **The only shortcut that is ever live regardless of overlay state is the
+  configured open-shortcut** (default `mod+k`, set via
+  `provideCmdk({ shortcut: ... })`). It is bound once via a document-level
+  listener owned by `CmdkPaletteComponent`.
+- **Every shortcut must include a real modifier** — `mod`, `ctrl`, `alt`, or
+  `cmd`/`meta`. A bare key (`"s"`) or a shift-only combo (`"shift+p"`) is
+  rejected: `register()` throws for a command shortcut, and `provideCmdk()`
+  throws for the open-shortcut. Shift alone doesn't count, since holding
+  Shift is how users type capital letters — a shift-only binding would
+  collide with ordinary typing. This makes bare/shift-only shortcuts
+  impossible to register in the first place, rather than silently inert.
+- **Conflict handling matches the ID rule.** Two shortcuts collide if they
+  parse to the same key + modifier combination, regardless of token order
+  (`"mod+shift+p"` and `"shift+mod+p"` are the same shortcut). If a second
+  command registers a colliding `shortcut`, `register()` throws immediately
   rather than silently overriding the earlier binding.
-- **Typing safety.** While focus is in an `<input>`, `<textarea>`, or a
-  `contenteditable` element, only combos that include a modifier (`mod`,
-  `ctrl`, `alt`, `shift+mod`, etc.) are honored. A bare single-key shortcut
-  (e.g. `"s"`) will not fire while the user is typing that character into a
-  text field. Modifier combos always fire, matching common behavior in apps
-  like Linear/Slack.
 - **`preventDefault()` is called on match**, so bindings don't collide with
   browser defaults (e.g. `mod+s` triggering the browser's save-page dialog).
-- **`CommandRegistryService` owns the global `keydown` listener** (attached
-  once, lazily, via the `DOCUMENT` token) — not the palette component.
-  Shortcuts work even if the palette UI is never mounted, since they're a
-  property of "what commands are currently registered," not of the overlay.
+- **`CommandRegistryService` owns shortcut *matching* (`matchShortcut()`),
+  not listening.** It no longer attaches any `keydown` listener itself —
+  matching is invoked by whichever caller currently wants to check the
+  current keydown against registered shortcuts (today, only the open
+  palette). This keeps the registry as the single source of truth for what
+  a given keystroke resolves to, without deciding on its own when that
+  check should run.
 
 ## Registry service — `CommandRegistryService`
 
@@ -100,16 +115,22 @@ class CommandRegistryService {
   `priority` (descending) then insertion order.
 - `register(command)`:
   1. Resolves or generates the `id`.
-  2. Throws if the `id` or `shortcut` collides with an existing entry.
-  3. Inserts into the map; wires the `shortcut` (if any) into the shared
-     keydown listener.
+  2. Throws if the `shortcut` lacks a real modifier, or if the `id` or
+     `shortcut` collides with an existing entry.
+  3. Inserts into the map; parses the `shortcut` (if any) so
+     `matchShortcut()` can find it.
   4. Returns an `unregister` closure that removes the entry and its shortcut
      binding. Consumers call this from `ngOnDestroy`, or pass it to
      `DestroyRef.onDestroy(fn)` for automatic cleanup tied to the
      component/service's lifetime.
   5. Calling the returned `unregister` more than once is a safe no-op.
-- The service is the single source of truth. The palette component and the
-  shortcut listener both read from it; there is no duplicated state.
+- `matchShortcut(event: KeyboardEvent): ResolvedCommand | undefined` — looks
+  up which registered command (if any) a keydown event matches. Does not
+  execute the command or call `preventDefault()`; the caller decides what
+  to do with the result.
+- The service is the single source of truth. The palette component reads
+  both `commands()` and `matchShortcut()` from it; there is no duplicated
+  state.
 
 ## Palette UI — `CmdkPaletteComponent`
 
@@ -125,7 +146,9 @@ Usage: mounted once, typically in the root `AppComponent` template —
   fall into a default "Other" bucket) and rendered as sections with headers.
 - **Keyboard navigation**: `ArrowUp`/`ArrowDown` move a `selectedIndex`
   signal; `Enter` calls `execute()` on the selected command and closes the
-  palette; `Escape` closes without executing.
+  palette; `Escape` closes without executing. Any other keydown on the panel
+  is checked against `CommandRegistryService.matchShortcut()`; a match
+  executes that command and closes the palette, the same as Enter.
 - **Rendering**: plain elements + CSS custom properties for the
   overlay/backdrop, input, and list. Uses a manually-managed overlay `<div>`
   (conditionally rendered, with hand-rolled focus management and an
@@ -154,38 +177,38 @@ A lightweight, built-in fuzzy matcher with zero external dependencies:
 ## Error handling
 
 - **`execute()` throws or rejects**: caught by the invoker (palette
-  selection or shortcut listener), logged via `console.error` including the
+  selection or shortcut match), logged via `console.error` including the
   command's `id`/`label`, and the interaction still completes (palette
-  closes / shortcut handling finishes). The library does not surface a
-  toast or error UI — user-facing error handling is the command's own
-  responsibility, since only the consumer knows what "failed" should look
-  like for their action.
+  closes). The library does not surface a toast or error UI — user-facing
+  error handling is the command's own responsibility, since only the
+  consumer knows what "failed" should look like for their action.
 - **Duplicate `id` or `shortcut` at `register()` time**: throws synchronously
   with a descriptive `Error` (e.g. `Command with id "save" is already
   registered`). Fail-fast, since this is a programming mistake.
+- **Shortcut without a real modifier at `register()`/`provideCmdk()` time**:
+  throws synchronously (see Shortcut binding above) rather than registering
+  a shortcut that could never safely fire.
 - **Double-unregister**: calling the teardown function twice is a safe
   no-op, since `ngOnDestroy` and manual cleanup paths could plausibly race
   or double-call.
-- **Typing-safety guard** on the shortcut listener (see above) is itself an
-  error-prevention measure — bare-key shortcuts are filtered out before
-  matching while an editable element is focused, so no separate error path
-  is needed there.
 
 ## Testing strategy
 
 - **`CommandRegistryService`**: register/unregister, duplicate `id` throws,
-  duplicate `shortcut` throws, double-unregister is a no-op, `commands()`
-  reflects priority/insertion ordering.
+  duplicate `shortcut` throws (including equivalent combos in a different
+  token order), shortcut without a modifier throws, double-unregister is a
+  no-op, `commands()` reflects priority/insertion ordering,
+  `matchShortcut()` returns the right command or `undefined`.
 - **Fuzzy matcher**: pure function, table-driven cases (exact match, partial
   match, keyword-only match, no match, relative scoring/ordering).
-- **Shortcut listener**: simulated `keydown` events — modifier combo fires
-  while an input is focused, bare key does not fire while an input is
-  focused, `mod` resolves correctly per platform, matched shortcut calls
-  `preventDefault()`.
-- **`CmdkPaletteComponent`**: `TestBed` component tests — opening via
-  shortcut, filtering as `query` changes, arrow-key navigation moves
-  selection, `Enter` executes and closes, `Escape` closes without
-  executing, grouped rendering order.
+- **`provideCmdk()`**: default/override config, throws when given a
+  shortcut without a modifier.
+- **`CmdkPaletteComponent`**: `TestBed` component tests — opening via the
+  configured open-shortcut, filtering as `query` changes, arrow-key
+  navigation moves selection, `Enter` executes and closes, `Escape` closes
+  without executing, a registered command's shortcut executes and closes
+  while open, that same shortcut does nothing while closed, grouped
+  rendering order.
 - **Demo app**: manual sanity-check surface during development — sample
   commands (some grouped, some with shortcuts, one that throws) to click
   through in the browser. Not part of the automated test suite.

@@ -11,6 +11,18 @@ describe('provideCmdk', () => {
     TestBed.configureTestingModule({ providers: [provideCmdk({ shortcut: 'ctrl+p' })] });
     expect(TestBed.inject(CMDK_CONFIG)).toEqual({ shortcut: 'ctrl+p' });
   });
+
+  it('throws when given a shortcut without a modifier', () => {
+    expect(() => provideCmdk({ shortcut: 'k' })).toThrow(
+      'Shortcut "k" must include a modifier (mod, ctrl, alt, or cmd)',
+    );
+  });
+
+  it('throws when given a shift-only shortcut', () => {
+    expect(() => provideCmdk({ shortcut: 'shift+k' })).toThrow(
+      'Shortcut "shift+k" must include a modifier (mod, ctrl, alt, or cmd)',
+    );
+  });
 });
 
 describe('CMDK_CONFIG default factory', () => {

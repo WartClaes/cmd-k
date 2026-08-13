@@ -142,4 +142,23 @@ describe('CmdkPaletteComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.cmdk-empty')).not.toBeNull();
   });
+
+  it('executes a registered command shortcut and closes while the overlay is open', () => {
+    const execute = vi.fn();
+    registry.register({ id: 'save', label: 'Save', shortcut: 'mod+s', execute });
+    pressOpenShortcut();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, bubbles: true }));
+    fixture.detectChanges();
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.querySelector('.cmdk-overlay')).toBeNull();
+  });
+
+  it('does not execute a registered command shortcut while the overlay is closed', () => {
+    const execute = vi.fn();
+    registry.register({ id: 'save', label: 'Save', shortcut: 'mod+s', execute });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, bubbles: true }));
+    fixture.detectChanges();
+    expect(execute).not.toHaveBeenCalled();
+  });
 });

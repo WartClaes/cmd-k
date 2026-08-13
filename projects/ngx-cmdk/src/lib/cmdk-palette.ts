@@ -92,6 +92,13 @@ export class CmdkPaletteComponent {
         }
         break;
       }
+      default: {
+        const command = this.registry.matchShortcut(event);
+        if (command) {
+          event.preventDefault();
+          this.runSelected(command);
+        }
+      }
     }
   }
 
