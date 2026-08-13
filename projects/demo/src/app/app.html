@@ -1,0 +1,20 @@
+<main class="demo-app">
+  <h1>ngx-cmdk demo</h1>
+  <p>Press <kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> to open the command palette.</p>
+
+  <app-demo-actions />
+  <app-demo-nav />
+
+  <section class="demo-panel">
+    <h2>Activity log</h2>
+    <ul>
+      @for (entry of log.recent(); track $index) {
+        <li>{{ entry }}</li>
+      } @empty {
+        <li>Nothing yet — try a command.</li>
+      }
+    </ul>
+  </section>
+
+  <ngx-cmdk-palette />
+</main>
