@@ -12,4 +12,10 @@ import { DemoNav } from './demo-nav';
 })
 export class App {
   protected readonly log = inject(DemoActivityLog);
+
+  protected readonly installSnippet = 'npm install ngx-cmdk';
+
+  protected readonly providerSnippet = `providers: [provideCmdk()]`;
+
+  protected readonly templateSnippet = '<ngx-cmdk-palette />';
 }

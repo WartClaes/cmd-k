@@ -1,20 +1,51 @@
 <main class="demo-app">
-  <h1>ngx-cmdk demo</h1>
-  <p>Press <kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> to open the command palette.</p>
+  <header class="demo-hero">
+    <h1>ngx-cmdk</h1>
+    <p class="demo-tagline">
+      A Cmd/Ctrl+K style command palette for Angular. Any component,
+      directive, guard, or service anywhere in your app can register
+      commands via dependency injection.
+    </p>
+    <p class="demo-callout">
+      Press <kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> to try it right now — the
+      palette below is the real, live component, not a screenshot.
+    </p>
+  </header>
 
-  <app-demo-actions />
-  <app-demo-nav />
-
-  <section class="demo-panel">
-    <h2>Activity log</h2>
-    <ul>
-      @for (entry of log.recent(); track $index) {
-        <li>{{ entry }}</li>
-      } @empty {
-        <li>Nothing yet — try a command.</li>
-      }
-    </ul>
+  <section class="demo-section">
+    <h2>Install &amp; quick start</h2>
+    <pre class="demo-code"><code>{{ installSnippet }}</code></pre>
+    <pre class="demo-code"><code>{{ providerSnippet }}</code></pre>
+    <pre class="demo-code"><code>{{ templateSnippet }}</code></pre>
   </section>
+
+  <section class="demo-section">
+    <h2>Live demo</h2>
+    <p>
+      These panels register real commands from independent components,
+      exactly as a consuming app would. Open the palette and try "Go to
+      Section A", "Show Alert", or "Cause Error".
+    </p>
+    <app-demo-actions />
+    <app-demo-nav />
+
+    <section class="demo-panel">
+      <h3>Activity log</h3>
+      <ul>
+        @for (entry of log.recent(); track $index) {
+          <li>{{ entry }}</li>
+        } @empty {
+          <li>Nothing yet — try a command.</li>
+        }
+      </ul>
+    </section>
+  </section>
+
+  <footer class="demo-footer">
+    <a href="https://github.com/WartClaes/cmd-k">GitHub</a>
+    ·
+    <span>MIT License</span>
+  </footer>
 
   <ngx-cmdk-palette />
 </main>

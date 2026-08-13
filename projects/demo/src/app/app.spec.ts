@@ -16,6 +16,6 @@ describe('App', () => {
   it('renders the demo heading', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain('ngx-cmdk demo');
+    expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain('ngx-cmdk');
   });
 });
