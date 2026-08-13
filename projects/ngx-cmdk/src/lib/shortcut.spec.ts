@@ -1,4 +1,4 @@
-import { hasExactlyOneKey, hasRequiredModifier, matchesShortcut, parseShortcut } from './shortcut';
+import { formatShortcut, hasExactlyOneKey, hasRequiredModifier, matchesShortcut, parseShortcut } from './shortcut';
 
 describe('parseShortcut', () => {
   it('resolves "mod" to meta on Mac', () => {
@@ -91,5 +91,31 @@ describe('hasExactlyOneKey', () => {
 
   it('returns false when more than one key token is present', () => {
     expect(hasExactlyOneKey('mod+k+j')).toBe(false);
+  });
+});
+
+describe('formatShortcut', () => {
+  it('renders "mod" as the Cmd symbol on Mac', () => {
+    expect(formatShortcut('mod+k', true)).toBe('⌘K');
+  });
+
+  it('renders "mod" as Ctrl on non-Mac', () => {
+    expect(formatShortcut('mod+k', false)).toBe('Ctrl+K');
+  });
+
+  it('renders multiple modifiers as concatenated symbols in HIG order on Mac', () => {
+    expect(formatShortcut('mod+shift+p', true)).toBe('⇧⌘P');
+  });
+
+  it('renders multiple modifiers as plus-joined labels on non-Mac', () => {
+    expect(formatShortcut('mod+shift+p', false)).toBe('Ctrl+Shift+P');
+  });
+
+  it('renders an explicit ctrl+alt combo with the correct symbols on Mac', () => {
+    expect(formatShortcut('ctrl+alt+k', true)).toBe('⌃⌥K');
+  });
+
+  it('renders an explicit ctrl+alt combo with the correct labels on non-Mac', () => {
+    expect(formatShortcut('ctrl+alt+k', false)).toBe('Ctrl+Alt+K');
   });
 });

@@ -32,7 +32,7 @@
               >
                 <span class="cmdk-item-label">{{ resolveLabel(match.item) }}</span>
                 @if (match.item.shortcut) {
-                  <span class="cmdk-shortcut">{{ match.item.shortcut }}</span>
+                  <span class="cmdk-shortcut">{{ formatShortcut(match.item.shortcut) }}</span>
                 }
               </div>
             }

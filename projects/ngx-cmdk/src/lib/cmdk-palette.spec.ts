@@ -143,6 +143,12 @@ describe('CmdkPaletteComponent', () => {
     expect(fixture.nativeElement.querySelector('.cmdk-empty')).not.toBeNull();
   });
 
+  it('renders a command shortcut hint using the platform symbol', () => {
+    registry.register({ id: 'save', label: 'Save', shortcut: 'mod+s', execute: () => {} });
+    pressOpenShortcut();
+    expect(fixture.nativeElement.querySelector('.cmdk-shortcut')?.textContent).toBe('⌘S');
+  });
+
   it('executes a registered command shortcut and closes while the overlay is open', () => {
     const execute = vi.fn();
     registry.register({ id: 'save', label: 'Save', shortcut: 'mod+s', execute });

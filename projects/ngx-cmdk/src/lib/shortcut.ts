@@ -95,3 +95,21 @@ export function hasRequiredModifier(shortcut: string): boolean {
 export function hasExactlyOneKey(shortcut: string): boolean {
   return tokenize(shortcut).filter((token) => !ALL_MODIFIER_TOKENS.has(token)).length === 1;
 }
+
+export function formatShortcut(shortcut: string, isMac: boolean): string {
+  const parsed = parseShortcut(shortcut, isMac);
+  const key = parsed.key.toUpperCase();
+
+  if (isMac) {
+    // Apple's Human Interface Guidelines order for displaying multiple modifiers: ⌃⌥⇧⌘.
+    const symbols = [parsed.ctrl && '⌃', parsed.alt && '⌥', parsed.shift && '⇧', parsed.meta && '⌘'].filter(
+      (symbol): symbol is string => !!symbol,
+    );
+    return [...symbols, key].join('');
+  }
+
+  const labels = [parsed.ctrl && 'Ctrl', parsed.alt && 'Alt', parsed.shift && 'Shift', parsed.meta && 'Win'].filter(
+    (label): label is string => !!label,
+  );
+  return [...labels, key].join('+');
+}

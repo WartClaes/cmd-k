@@ -5,7 +5,7 @@ import { CMDK_CONFIG } from './cmdk-config';
 import { CommandRegistryService } from './command-registry';
 import { fuzzySearch } from './fuzzy-match';
 import { groupMatches } from './group-matches';
-import { isMacPlatform, matchesShortcut, parseShortcut } from './shortcut';
+import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from './shortcut';
 
 @Component({
   selector: 'ngx-cmdk-palette',
@@ -31,6 +31,7 @@ export class CmdkPaletteComponent {
   protected readonly flatMatches = computed(() => this.groups().flatMap((g) => g.matches));
   protected readonly selectedCommand = computed(() => this.flatMatches()[this.selectedIndex()]?.item);
   protected readonly resolveLabel = resolveLabel;
+  protected readonly formatShortcut = (shortcut: string) => formatShortcut(shortcut, this.isMac);
 
   constructor() {
     const onOpenShortcut = (event: KeyboardEvent) => {
