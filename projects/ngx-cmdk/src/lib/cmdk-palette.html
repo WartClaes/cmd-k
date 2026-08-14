@@ -45,7 +45,7 @@
               >
                 <span class="cmdk-item-main">
                   @if (result.icon) {
-                    <span class="cmdk-item-icon" [class]="result.icon"></span>
+                    <span class="cmdk-item-icon" [class]="result.icon" aria-hidden="true"></span>
                   }
                   <span class="cmdk-item-label">{{ result.label }}</span>
                 </span>
@@ -74,7 +74,7 @@
                 >
                   <span class="cmdk-item-main">
                     @if (match.item.icon) {
-                      <span class="cmdk-item-icon" [class]="match.item.icon"></span>
+                      <span class="cmdk-item-icon" [class]="match.item.icon" aria-hidden="true"></span>
                     }
                     <span class="cmdk-item-label">{{ resolveLabel(match.item) }}</span>
                   </span>

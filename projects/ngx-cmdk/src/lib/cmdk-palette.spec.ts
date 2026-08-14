@@ -593,6 +593,7 @@ describe('CmdkPaletteComponent', () => {
     expect(iconEl).not.toBeNull();
     expect(iconEl.classList.contains('icon-star')).toBe(true);
     expect(iconEl.textContent).toBe('');
+    expect(iconEl.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('does not render an icon span for a command without an icon', () => {
@@ -622,6 +623,7 @@ describe('CmdkPaletteComponent', () => {
       expect(iconEl).not.toBeNull();
       expect(iconEl.classList.contains('icon-apple')).toBe(true);
       expect(iconEl.textContent).toBe('');
+      expect(iconEl.getAttribute('aria-hidden')).toBe('true');
     } finally {
       vi.useRealTimers();
     }
