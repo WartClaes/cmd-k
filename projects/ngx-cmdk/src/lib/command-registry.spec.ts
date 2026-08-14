@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { CommandRegistryService } from './command-registry';
 import type { Command } from './command.model';
 import { provideCmdk } from './cmdk-config';
+import { CmdkIssueService } from './cmdk-issue';
 
 function makeCommand(overrides: Partial<Command> = {}): Command {
   return { label: 'Test Command', execute: () => {}, ...overrides };
@@ -139,20 +140,28 @@ describe('CommandRegistryService.execute()', () => {
 
   it('logs and swallows an error thrown by execute()', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const issues = TestBed.inject(CmdkIssueService);
+    const onIssue = vi.fn();
+    issues.onIssue(onIssue);
     const command = { ...makeCommand({ id: 'broken' }), id: 'broken', execute: () => {
       throw new Error('boom');
     } };
     expect(() => service.execute(command)).not.toThrow();
     expect(consoleError).toHaveBeenCalled();
+    expect(onIssue).toHaveBeenCalledWith({ source: 'command', commandId: 'broken', error: expect.any(Error) });
     consoleError.mockRestore();
   });
 
   it('logs and swallows a rejected promise returned by execute()', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const issues = TestBed.inject(CmdkIssueService);
+    const onIssue = vi.fn();
+    issues.onIssue(onIssue);
     const command = { ...makeCommand({ id: 'broken' }), id: 'broken', execute: () => Promise.reject(new Error('boom')) };
     service.execute(command);
     await Promise.resolve();
     expect(consoleError).toHaveBeenCalled();
+    expect(onIssue).toHaveBeenCalledWith({ source: 'command', commandId: 'broken', error: expect.any(Error) });
     consoleError.mockRestore();
   });
 });

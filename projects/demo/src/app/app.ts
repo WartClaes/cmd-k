@@ -4,10 +4,11 @@ import { ApiReference } from './api-reference';
 import { DemoActivityLog } from './demo-activity-log';
 import { DemoActions } from './demo-actions';
 import { DemoNav } from './demo-nav';
+import { DemoSearch } from './demo-search';
 
 @Component({
   selector: 'app-root',
-  imports: [CmdkPaletteComponent, DemoActions, DemoNav, ApiReference],
+  imports: [CmdkPaletteComponent, DemoActions, DemoNav, DemoSearch, ApiReference],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

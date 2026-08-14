@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import type { Command, ResolvedCommand } from './command.model';
 import { CMDK_CONFIG } from './cmdk-config';
+import { CmdkIssueService } from './cmdk-issue';
 import {
   hasExactlyOneKey,
   hasRequiredModifier,
@@ -30,6 +31,7 @@ function generateId(): string {
 export class CommandRegistryService {
   private readonly document = inject(DOCUMENT);
   private readonly config = inject(CMDK_CONFIG);
+  private readonly issues = inject(CmdkIssueService);
   private readonly isMac = isMacPlatform(this.document.defaultView?.navigator.platform ?? '');
   private readonly openShortcutKey = canonicalShortcutKey(parseShortcut(this.config.shortcut, this.isMac));
   private readonly commandsMap = signal<Map<string, ResolvedCommand>>(new Map());
@@ -95,10 +97,14 @@ export class CommandRegistryService {
     try {
       const result = command.execute();
       if (result instanceof Promise) {
-        result.catch((error) => console.error(`Command "${command.id}" failed:`, error));
+        result.catch((error) => {
+          console.error(`Command "${command.id}" failed:`, error);
+          this.issues.report({ source: 'command', commandId: command.id, error });
+        });
       }
     } catch (error) {
       console.error(`Command "${command.id}" failed:`, error);
+      this.issues.report({ source: 'command', commandId: command.id, error });
     }
   }
 

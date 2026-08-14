@@ -1,0 +1,65 @@
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { CMDK_CONFIG } from './cmdk-config';
+import { CmdkIssueService } from './cmdk-issue';
+import type { SearchProvider, SearchResult } from './search.model';
+
+async function searchWithTimeout(
+  provider: SearchProvider,
+  query: string,
+  timeoutMs: number,
+  issues: CmdkIssueService,
+): Promise<SearchResult[]> {
+  const timeout = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), timeoutMs));
+  try {
+    const outcome = await Promise.race([provider.search(query), timeout]);
+    if (outcome === 'timeout') {
+      console.warn(`Search provider "${provider.key}" timed out after ${timeoutMs}ms`);
+      issues.report({ source: 'search-provider', key: provider.key, query, reason: 'timeout' });
+      return [];
+    }
+    return outcome;
+  } catch (error) {
+    console.warn(`Search provider "${provider.key}" failed:`, error);
+    issues.report({ source: 'search-provider', key: provider.key, query, reason: 'error', error });
+    return [];
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class SearchRegistryService {
+  private readonly config = inject(CMDK_CONFIG);
+  private readonly issues = inject(CmdkIssueService);
+  private readonly providersMap = signal<Map<string, SearchProvider>>(new Map());
+
+  readonly providers = computed<readonly SearchProvider[]>(() => Array.from(this.providersMap().values()));
+  readonly hasProviders = computed(() => this.providers().length > 0);
+
+  register(provider: SearchProvider): () => void {
+    if (this.providersMap().has(provider.key)) {
+      throw new Error(`Search provider with key "${provider.key}" is already registered`);
+    }
+    this.providersMap.update((map) => new Map(map).set(provider.key, provider));
+
+    let unregistered = false;
+    return () => {
+      if (unregistered) {
+        return;
+      }
+      unregistered = true;
+      this.providersMap.update((map) => {
+        const next = new Map(map);
+        next.delete(provider.key);
+        return next;
+      });
+    };
+  }
+
+  async search(query: string, scopeKey?: string): Promise<SearchResult[]> {
+    const all = this.providers();
+    const targets = scopeKey ? all.filter((provider) => provider.key === scopeKey) : all;
+    const resultsPerProvider = await Promise.all(
+      targets.map((provider) => searchWithTimeout(provider, query, this.config.searchTimeoutMs, this.issues)),
+    );
+    return resultsPerProvider.flat();
+  }
+}
