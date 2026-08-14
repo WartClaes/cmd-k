@@ -36,6 +36,21 @@ constructor() {
 }
 ```
 
+Search providers are a second registration surface — attach an async data
+source and typing fans the query out to every registered provider, merging
+the results into the palette:
+
+```ts
+constructor() {
+  const search = inject(SearchRegistryService);
+  search.register({
+    key: 'fruits',
+    label: 'fruits',
+    search: async (query) => fetchResults(query),
+  });
+}
+```
+
 See the [live docs](https://wartclaes.github.io/cmd-k/) for the full guide
 and API reference.
 
