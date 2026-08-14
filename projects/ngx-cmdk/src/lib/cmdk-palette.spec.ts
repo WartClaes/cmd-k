@@ -585,4 +585,68 @@ describe('CmdkPaletteComponent', () => {
       vi.useRealTimers();
     }
   });
+
+  it('renders a command icon as a CSS class on an icon span', () => {
+    registry.register({ id: 'a', label: 'Alpha', icon: 'icon-star', execute: () => {} });
+    pressOpenShortcut();
+    const iconEl: HTMLElement = fixture.nativeElement.querySelector('.cmdk-item .cmdk-item-icon');
+    expect(iconEl).not.toBeNull();
+    expect(iconEl.classList.contains('icon-star')).toBe(true);
+    expect(iconEl.textContent).toBe('');
+  });
+
+  it('does not render an icon span for a command without an icon', () => {
+    registry.register({ id: 'a', label: 'Alpha', execute: () => {} });
+    pressOpenShortcut();
+    expect(fixture.nativeElement.querySelector('.cmdk-item-icon')).toBeNull();
+  });
+
+  it('renders a search result icon as a CSS class on an icon span', async () => {
+    vi.useFakeTimers();
+    try {
+      const searchRegistry = TestBed.inject(SearchRegistryService);
+      searchRegistry.register({
+        key: 'fruits',
+        label: 'fruits',
+        search: async () => [{ label: 'Apple', icon: 'icon-apple', execute: () => {} }],
+      });
+      pressOpenShortcut();
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+      input.value = 'app';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(200);
+      fixture.detectChanges();
+
+      const iconEl: HTMLElement = fixture.nativeElement.querySelector('.cmdk-item .cmdk-item-icon');
+      expect(iconEl).not.toBeNull();
+      expect(iconEl.classList.contains('icon-apple')).toBe(true);
+      expect(iconEl.textContent).toBe('');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not render an icon span for a search result without an icon', async () => {
+    vi.useFakeTimers();
+    try {
+      const searchRegistry = TestBed.inject(SearchRegistryService);
+      searchRegistry.register({
+        key: 'fruits',
+        label: 'fruits',
+        search: async () => [{ label: 'Apple', execute: () => {} }],
+      });
+      pressOpenShortcut();
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+      input.value = 'app';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(200);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.cmdk-item-icon')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

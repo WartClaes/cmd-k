@@ -30,3 +30,18 @@
   flex-direction: column;
   gap: 16px;
 }
+
+/*
+ * ngx-cmdk never ships an icon system — Command.icon/SearchResult.icon are
+ * consumer-defined CSS class tokens rendered on an empty <span>, and it's up
+ * to this app's own global styles to say what they look like. These two use
+ * plain Unicode characters via `content`, so the demo proves the mechanism
+ * without pulling in an icon font/library dependency.
+ */
+.demo-icon-alert::before {
+  content: '🔔';
+}
+
+.demo-icon-fruit::before {
+  content: '🍎';
+}

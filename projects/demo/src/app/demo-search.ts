@@ -24,6 +24,7 @@ export class DemoSearch {
         return FRUITS.filter((fruit) => fruit.toLowerCase().includes(lower)).map((fruit) => ({
           label: fruit,
           subtitle: `/fruits/${fruit.toLowerCase()}`,
+          icon: 'demo-icon-fruit',
           execute: () => this.log.log(`Selected "${fruit}" from search`),
         }));
       },

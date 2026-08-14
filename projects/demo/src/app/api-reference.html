@@ -36,6 +36,21 @@
   </article>
 
   <article>
+    <h3>Icons</h3>
+    <p>
+      Both <code>Command.icon</code> and <code>SearchResult.icon</code>
+      render the same way: as an extra CSS class on an otherwise-empty
+      <code>&lt;span class="cmdk-item-icon"&gt;</code>. ngx-cmdk ships no
+      icon system of its own — your app's global stylesheet decides what
+      that class actually looks like (an icon-font <code>::before</code>
+      glyph, a <code>background-image</code>, a masked SVG, whatever you
+      already use), the same "bring your own styling" approach as the
+      <code>--cmdk-*</code> custom properties elsewhere in this library.
+      Leave <code>icon</code> unset and nothing extra renders.
+    </p>
+  </article>
+
+  <article>
     <h3>provideCmdk()</h3>
     <p>
       Configures the palette's open shortcut app-wide. Call it once in
