@@ -16,8 +16,8 @@
           #searchInput
           class="cmdk-input"
           type="text"
-          aria-label="Search commands"
-          [attr.aria-activedescendant]="selectedCommand() ? 'cmdk-item-' + selectedCommand()!.id : null"
+          [attr.aria-label]="searchInputLabel()"
+          [attr.aria-activedescendant]="activeDescendantId()"
           [value]="query()"
           (input)="onQueryChange($any($event.target).value)"
         />

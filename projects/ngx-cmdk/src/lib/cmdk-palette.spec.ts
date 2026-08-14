@@ -508,4 +508,81 @@ describe('CmdkPaletteComponent', () => {
       vi.useRealTimers();
     }
   });
+
+  it('aria-activedescendant resolves to an existing element in both Commands mode and search mode', async () => {
+    vi.useFakeTimers();
+    try {
+      registry.register({ id: 'a', label: 'Alpha', execute: () => {} });
+      pressOpenShortcut();
+      let input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+      let activeId = input.getAttribute('aria-activedescendant');
+      expect(activeId).toBeTruthy();
+      expect(fixture.nativeElement.querySelector(`#${activeId}`)).not.toBeNull();
+
+      const searchRegistry = TestBed.inject(SearchRegistryService);
+      searchRegistry.register({
+        key: 'fruits',
+        label: 'fruits',
+        search: async () => [{ label: 'Apple', execute: () => {} }],
+      });
+      input.value = 'app';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(200);
+      fixture.detectChanges();
+
+      input = fixture.nativeElement.querySelector('.cmdk-input');
+      activeId = input.getAttribute('aria-activedescendant');
+      expect(activeId).toBeTruthy();
+      expect(fixture.nativeElement.querySelector(`#${activeId}`)).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('discards a stale in-flight response when a newer keystroke arrives before the old debounce timer fires', async () => {
+    vi.useFakeTimers();
+    try {
+      const searchRegistry = TestBed.inject(SearchRegistryService);
+      const search = vi.fn(async (q: string) => {
+        if (q === 'app') {
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          return [{ label: 'Stale: app', execute: () => {} }];
+        }
+        return [{ label: 'Fresh: appl', execute: () => {} }];
+      });
+      searchRegistry.register({ key: 'fruits', label: 'fruits', search });
+      pressOpenShortcut();
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+
+      input.value = 'app';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(200); // debounce fires, "app" search begins (150ms internal delay)
+
+      input.value = 'appl';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      // At this point the "app" search is still in flight (resolves at the 150ms mark from when it started).
+      // Advance past when "app" would resolve, but before "appl"'s own 200ms debounce fires.
+      await vi.advanceTimersByTimeAsync(150);
+      fixture.detectChanges();
+
+      // The stale "app" result must NOT have been painted.
+      let items = Array.from(
+        fixture.nativeElement.querySelectorAll('.cmdk-item-label') as NodeListOf<Element>,
+      ).map((el) => el.textContent);
+      expect(items).not.toContain('Stale: app');
+
+      await vi.advanceTimersByTimeAsync(50); // let "appl"'s debounce fire and its search resolve
+      fixture.detectChanges();
+
+      items = Array.from(
+        fixture.nativeElement.querySelectorAll('.cmdk-item-label') as NodeListOf<Element>,
+      ).map((el) => el.textContent);
+      expect(items).toEqual(['Fresh: appl']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

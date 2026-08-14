@@ -50,6 +50,17 @@ export class CmdkPaletteComponent {
 
   protected readonly selectedSearchResult = computed(() => this.searchResults()?.[this.selectedIndex()]);
 
+  protected readonly activeDescendantId = computed(() => {
+    if (this.isSearchModeActive()) {
+      return this.selectedSearchResult() ? `cmdk-item-search-${this.selectedIndex()}` : null;
+    }
+    return this.selectedCommand() ? `cmdk-item-${this.selectedCommand()!.id}` : null;
+  });
+
+  protected readonly searchInputLabel = computed(() =>
+    this.isSearchModeActive() ? 'Search' : 'Search commands',
+  );
+
   constructor() {
     const onOpenShortcut = (event: KeyboardEvent) => {
       if (matchesShortcut(event, this.openShortcut)) {
@@ -83,11 +94,13 @@ export class CmdkPaletteComponent {
     this.query.set('');
     this.selectedIndex.set(0);
     this.scopedProviderKey.set(null);
+    this.searchResults.set(null);
     this.isOpen.set(true);
   }
 
   protected close(): void {
     clearTimeout(this.searchDebounceTimer);
+    this.searchGeneration++;
     if (!this.isOpen()) {
       return;
     }
@@ -157,8 +170,9 @@ export class CmdkPaletteComponent {
         }
         break;
       case 'Tab':
-        // The search input is the panel's only focusable element, so trapping focus
-        // just means keeping it there — there's nowhere else inside the panel to move to.
+        // Chip-row buttons exist but are intentionally mouse-only (keyboard scoping goes
+        // through the typed "key:" prefix instead), so trapping focus back to the search
+        // input is still correct — it's the only element meant to hold keyboard focus here.
         event.preventDefault();
         this.searchInput()?.nativeElement.focus();
         break;
@@ -198,8 +212,8 @@ export class CmdkPaletteComponent {
     if (!query.trim() || !this.searchRegistry.hasProviders()) {
       return;
     }
+    const myGeneration = ++this.searchGeneration;
     this.searchDebounceTimer = setTimeout(() => {
-      const myGeneration = ++this.searchGeneration;
       this.searchRegistry.search(query, scopeKey ?? undefined).then((results) => {
         if (myGeneration === this.searchGeneration) {
           this.searchResults.set(results);
