@@ -117,3 +117,8 @@
 .cmdk-chip:hover {
   background: var(--cmdk-accent, #eef2ff);
 }
+
+.cmdk-item-subtitle {
+  font-size: 12px;
+  color: var(--cmdk-muted, #888);
+}

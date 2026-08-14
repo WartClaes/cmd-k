@@ -2,10 +2,12 @@ import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { resolveLabel, type ResolvedCommand } from './command.model';
 import { CMDK_CONFIG } from './cmdk-config';
+import { CmdkIssueService } from './cmdk-issue';
 import { CommandRegistryService } from './command-registry';
 import { fuzzySearch } from './fuzzy-match';
 import { groupMatches } from './group-matches';
 import { SearchRegistryService } from './search-registry';
+import type { SearchResult } from './search.model';
 import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from './shortcut';
 
 @Component({
@@ -17,11 +19,14 @@ import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from '.
 export class CmdkPaletteComponent {
   private readonly registry = inject(CommandRegistryService);
   private readonly searchRegistry = inject(SearchRegistryService);
+  private readonly issues = inject(CmdkIssueService);
   private readonly config = inject(CMDK_CONFIG);
   private readonly document = inject(DOCUMENT);
   private readonly isMac = isMacPlatform(this.document.defaultView?.navigator.platform ?? '');
   private readonly openShortcut = parseShortcut(this.config.shortcut, this.isMac);
   private previouslyFocused: HTMLElement | null = null;
+  private searchDebounceTimer?: ReturnType<typeof setTimeout>;
+  private searchGeneration = 0;
 
   protected readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
   protected readonly isOpen = signal(false);
@@ -37,6 +42,14 @@ export class CmdkPaletteComponent {
   protected readonly resolveLabel = resolveLabel;
   protected readonly formatShortcut = (shortcut: string) => formatShortcut(shortcut, this.isMac);
 
+  protected readonly searchResults = signal<SearchResult[] | null>(null);
+
+  protected readonly isSearchModeActive = computed(
+    () => this.searchRegistry.hasProviders() && this.query().trim().length > 0,
+  );
+
+  protected readonly selectedSearchResult = computed(() => this.searchResults()?.[this.selectedIndex()]);
+
   constructor() {
     const onOpenShortcut = (event: KeyboardEvent) => {
       if (matchesShortcut(event, this.openShortcut)) {
@@ -46,6 +59,7 @@ export class CmdkPaletteComponent {
     };
     this.document.addEventListener('keydown', onOpenShortcut);
     inject(DestroyRef).onDestroy(() => this.document.removeEventListener('keydown', onOpenShortcut));
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.searchDebounceTimer));
 
     effect(() => {
       if (this.isOpen()) {
@@ -54,7 +68,7 @@ export class CmdkPaletteComponent {
     });
 
     effect(() => {
-      const count = this.flatMatches().length;
+      const count = this.isSearchModeActive() ? (this.searchResults()?.length ?? 0) : this.flatMatches().length;
       if (this.selectedIndex() >= count) {
         this.selectedIndex.set(Math.max(0, count - 1));
       }
@@ -73,6 +87,7 @@ export class CmdkPaletteComponent {
   }
 
   protected close(): void {
+    clearTimeout(this.searchDebounceTimer);
     if (!this.isOpen()) {
       return;
     }
@@ -95,10 +110,14 @@ export class CmdkPaletteComponent {
     }
     this.query.set(value);
     this.selectedIndex.set(0);
+    this.searchResults.set(null);
+    this.scheduleSearch(value, this.scopedProviderKey());
   }
 
   protected selectProviderScope(key: string): void {
     this.scopedProviderKey.set(key);
+    this.searchResults.set(null);
+    this.scheduleSearch(this.query(), key);
     this.searchInput()?.nativeElement.focus();
   }
 
@@ -118,9 +137,16 @@ export class CmdkPaletteComponent {
         break;
       case 'Enter': {
         event.preventDefault();
-        const command = this.selectedCommand();
-        if (command) {
-          this.runSelected(command);
+        if (this.isSearchModeActive()) {
+          const result = this.selectedSearchResult();
+          if (result) {
+            this.runSearchResult(result);
+          }
+        } else {
+          const command = this.selectedCommand();
+          if (command) {
+            this.runSelectedCommand(command);
+          }
         }
         break;
       }
@@ -140,19 +166,50 @@ export class CmdkPaletteComponent {
         const command = this.registry.matchShortcut(event);
         if (command) {
           event.preventDefault();
-          this.runSelected(command);
+          this.runSelectedCommand(command);
         }
       }
     }
   }
 
-  protected runSelected(command: ResolvedCommand): void {
+  protected runSelectedCommand(command: ResolvedCommand): void {
     this.registry.execute(command);
     this.close();
   }
 
+  protected runSearchResult(result: SearchResult): void {
+    try {
+      const outcome = result.execute();
+      if (outcome instanceof Promise) {
+        outcome.catch((error) => {
+          console.error(`Search result "${result.label}" failed:`, error);
+          this.issues.report({ source: 'search-result', label: result.label, error });
+        });
+      }
+    } catch (error) {
+      console.error(`Search result "${result.label}" failed:`, error);
+      this.issues.report({ source: 'search-result', label: result.label, error });
+    }
+    this.close();
+  }
+
+  private scheduleSearch(query: string, scopeKey: string | null): void {
+    clearTimeout(this.searchDebounceTimer);
+    if (!query.trim() || !this.searchRegistry.hasProviders()) {
+      return;
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      const myGeneration = ++this.searchGeneration;
+      this.searchRegistry.search(query, scopeKey ?? undefined).then((results) => {
+        if (myGeneration === this.searchGeneration) {
+          this.searchResults.set(results);
+        }
+      });
+    }, 200);
+  }
+
   private moveSelection(delta: number): void {
-    const count = this.flatMatches().length;
+    const count = this.isSearchModeActive() ? (this.searchResults()?.length ?? 0) : this.flatMatches().length;
     if (count === 0) {
       return;
     }

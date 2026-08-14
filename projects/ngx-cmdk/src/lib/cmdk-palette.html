@@ -32,27 +32,51 @@
         </div>
       }
       <div class="cmdk-list" role="listbox">
-        @for (group of groups(); track group.name) {
-          <div class="cmdk-group">
-            <div class="cmdk-group-label">{{ group.name }}</div>
-            @for (match of group.matches; track match.item.id) {
+        @if (isSearchModeActive()) {
+          @if (searchResults(); as results) {
+            @for (result of results; track $index) {
               <div
-                [id]="'cmdk-item-' + match.item.id"
+                [id]="'cmdk-item-search-' + $index"
                 class="cmdk-item"
-                [class.cmdk-item--selected]="match.item.id === selectedCommand()?.id"
+                [class.cmdk-item--selected]="$index === selectedIndex()"
                 role="option"
-                [attr.aria-selected]="match.item.id === selectedCommand()?.id"
-                (click)="runSelected(match.item)"
+                [attr.aria-selected]="$index === selectedIndex()"
+                (click)="runSearchResult(result)"
               >
-                <span class="cmdk-item-label">{{ resolveLabel(match.item) }}</span>
-                @if (match.item.shortcut) {
-                  <span class="cmdk-shortcut">{{ formatShortcut(match.item.shortcut) }}</span>
+                <span class="cmdk-item-label">{{ result.label }}</span>
+                @if (result.subtitle) {
+                  <span class="cmdk-item-subtitle">{{ result.subtitle }}</span>
                 }
               </div>
+            } @empty {
+              <div class="cmdk-empty">No results</div>
             }
-          </div>
-        } @empty {
-          <div class="cmdk-empty">No matching commands</div>
+          } @else {
+            <div class="cmdk-empty">Searching…</div>
+          }
+        } @else {
+          @for (group of groups(); track group.name) {
+            <div class="cmdk-group">
+              <div class="cmdk-group-label">{{ group.name }}</div>
+              @for (match of group.matches; track match.item.id) {
+                <div
+                  [id]="'cmdk-item-' + match.item.id"
+                  class="cmdk-item"
+                  [class.cmdk-item--selected]="match.item.id === selectedCommand()?.id"
+                  role="option"
+                  [attr.aria-selected]="match.item.id === selectedCommand()?.id"
+                  (click)="runSelectedCommand(match.item)"
+                >
+                  <span class="cmdk-item-label">{{ resolveLabel(match.item) }}</span>
+                  @if (match.item.shortcut) {
+                    <span class="cmdk-shortcut">{{ formatShortcut(match.item.shortcut) }}</span>
+                  }
+                </div>
+              }
+            </div>
+          } @empty {
+            <div class="cmdk-empty">No matching commands</div>
+          }
         }
       </div>
     </div>
