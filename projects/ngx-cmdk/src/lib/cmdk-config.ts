@@ -3,9 +3,10 @@ import { hasExactlyOneKey, hasRequiredModifier } from './shortcut';
 
 export interface CmdkConfig {
   shortcut: string;
+  searchTimeoutMs: number;
 }
 
-export const DEFAULT_CMDK_CONFIG: CmdkConfig = { shortcut: 'mod+k' };
+export const DEFAULT_CMDK_CONFIG: CmdkConfig = { shortcut: 'mod+k', searchTimeoutMs: 5000 };
 
 export const CMDK_CONFIG = new InjectionToken<CmdkConfig>('CMDK_CONFIG', {
   factory: () => DEFAULT_CMDK_CONFIG,

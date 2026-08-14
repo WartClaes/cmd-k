@@ -9,7 +9,17 @@ describe('provideCmdk', () => {
 
   it('overrides only the provided fields', () => {
     TestBed.configureTestingModule({ providers: [provideCmdk({ shortcut: 'ctrl+p' })] });
-    expect(TestBed.inject(CMDK_CONFIG)).toEqual({ shortcut: 'ctrl+p' });
+    expect(TestBed.inject(CMDK_CONFIG)).toEqual({ shortcut: 'ctrl+p', searchTimeoutMs: 5000 });
+  });
+
+  it('defaults searchTimeoutMs to 5000 when not overridden', () => {
+    TestBed.configureTestingModule({ providers: [provideCmdk()] });
+    expect(TestBed.inject(CMDK_CONFIG).searchTimeoutMs).toBe(5000);
+  });
+
+  it('overrides searchTimeoutMs when provided', () => {
+    TestBed.configureTestingModule({ providers: [provideCmdk({ searchTimeoutMs: 100 })] });
+    expect(TestBed.inject(CMDK_CONFIG).searchTimeoutMs).toBe(100);
   });
 
   it('throws when given a shortcut without a modifier', () => {
