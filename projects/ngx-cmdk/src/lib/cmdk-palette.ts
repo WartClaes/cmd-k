@@ -5,6 +5,7 @@ import { CMDK_CONFIG } from './cmdk-config';
 import { CommandRegistryService } from './command-registry';
 import { fuzzySearch } from './fuzzy-match';
 import { groupMatches } from './group-matches';
+import { SearchRegistryService } from './search-registry';
 import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from './shortcut';
 
 @Component({
@@ -15,6 +16,7 @@ import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from '.
 })
 export class CmdkPaletteComponent {
   private readonly registry = inject(CommandRegistryService);
+  private readonly searchRegistry = inject(SearchRegistryService);
   private readonly config = inject(CMDK_CONFIG);
   private readonly document = inject(DOCUMENT);
   private readonly isMac = isMacPlatform(this.document.defaultView?.navigator.platform ?? '');
@@ -25,6 +27,8 @@ export class CmdkPaletteComponent {
   protected readonly isOpen = signal(false);
   protected readonly query = signal('');
   protected readonly selectedIndex = signal(0);
+  protected readonly scopedProviderKey = signal<string | null>(null);
+  protected readonly searchProviders = computed(() => this.searchRegistry.providers());
 
   protected readonly results = computed(() => fuzzySearch(this.query(), this.registry.commands()));
   protected readonly groups = computed(() => groupMatches(this.results()));
@@ -64,6 +68,7 @@ export class CmdkPaletteComponent {
     this.previouslyFocused = this.document.activeElement as HTMLElement | null;
     this.query.set('');
     this.selectedIndex.set(0);
+    this.scopedProviderKey.set(null);
     this.isOpen.set(true);
   }
 
@@ -75,9 +80,26 @@ export class CmdkPaletteComponent {
     this.previouslyFocused?.focus();
   }
 
-  protected onQueryChange(value: string): void {
+  protected onQueryChange(rawValue: string): void {
+    let value = rawValue;
+    if (this.scopedProviderKey() === null) {
+      const colonIndex = value.indexOf(':');
+      if (colonIndex !== -1) {
+        const candidateKey = value.slice(0, colonIndex).trim().toLowerCase();
+        const matchedProvider = this.searchProviders().find((p) => p.key.toLowerCase() === candidateKey);
+        if (matchedProvider) {
+          this.scopedProviderKey.set(matchedProvider.key);
+          value = value.slice(colonIndex + 1).trimStart();
+        }
+      }
+    }
     this.query.set(value);
     this.selectedIndex.set(0);
+  }
+
+  protected selectProviderScope(key: string): void {
+    this.scopedProviderKey.set(key);
+    this.searchInput()?.nativeElement.focus();
   }
 
   protected onKeydown(event: KeyboardEvent): void {
@@ -102,6 +124,12 @@ export class CmdkPaletteComponent {
         }
         break;
       }
+      case 'Backspace':
+        if (this.scopedProviderKey() !== null && this.query() === '') {
+          event.preventDefault();
+          this.scopedProviderKey.set(null);
+        }
+        break;
       case 'Tab':
         // The search input is the panel's only focusable element, so trapping focus
         // just means keeping it there — there's nowhere else inside the panel to move to.

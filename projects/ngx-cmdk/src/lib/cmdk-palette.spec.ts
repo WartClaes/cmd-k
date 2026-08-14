@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CmdkPaletteComponent } from './cmdk-palette';
 import { CommandRegistryService } from './command-registry';
 import { provideCmdk } from './cmdk-config';
+import { SearchRegistryService } from './search-registry';
 
 describe('CmdkPaletteComponent', () => {
   let fixture: ComponentFixture<CmdkPaletteComponent>;
@@ -197,5 +198,101 @@ describe('CmdkPaletteComponent', () => {
     fixture.destroy();
     expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
     removeEventListenerSpy.mockRestore();
+  });
+
+  it('does not show a chip row when no search providers are registered', () => {
+    pressOpenShortcut();
+    expect(fixture.nativeElement.querySelector('.cmdk-chip-row')).toBeNull();
+  });
+
+  it('shows a chip row with a button per registered search provider', () => {
+    const searchRegistry = TestBed.inject(SearchRegistryService);
+    searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+    searchRegistry.register({ key: 'colors', label: 'colors', search: async () => [] });
+    pressOpenShortcut();
+    const chipLabels = Array.from(
+      fixture.nativeElement.querySelectorAll('.cmdk-chip') as NodeListOf<Element>,
+    ).map((el) => el.textContent?.trim());
+    expect(chipLabels).toEqual(['fruits', 'colors']);
+  });
+
+  it('clicking a chip converts it into a scope token and hides the chip row', () => {
+    const searchRegistry = TestBed.inject(SearchRegistryService);
+    searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+    pressOpenShortcut();
+    const chip: HTMLElement = fixture.nativeElement.querySelector('.cmdk-chip');
+    chip.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-scope-token')?.textContent).toContain('fruits');
+    expect(fixture.nativeElement.querySelector('.cmdk-chip-row')).toBeNull();
+  });
+
+  it('typing "key:" converts the matching provider into a scope token', () => {
+    const searchRegistry = TestBed.inject(SearchRegistryService);
+    searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+    pressOpenShortcut();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+    input.value = 'fruits:app';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-scope-token')?.textContent).toContain('fruits');
+    expect(input.value).toBe('app');
+  });
+
+  it('does not convert a prefix that matches no registered provider', () => {
+    const searchRegistry = TestBed.inject(SearchRegistryService);
+    searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+    pressOpenShortcut();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+    input.value = 'nope:app';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-scope-token')).toBeNull();
+  });
+
+  it('Backspace with an empty query and an active token removes the token and restores the chip row', () => {
+    const searchRegistry = TestBed.inject(SearchRegistryService);
+    searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+    pressOpenShortcut();
+    const chip: HTMLElement = fixture.nativeElement.querySelector('.cmdk-chip');
+    chip.click();
+    fixture.detectChanges();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-scope-token')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.cmdk-chip-row')).not.toBeNull();
+  });
+
+  it('Backspace does not remove the token when the query is non-empty', () => {
+    const searchRegistry = TestBed.inject(SearchRegistryService);
+    searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+    pressOpenShortcut();
+    const chip: HTMLElement = fixture.nativeElement.querySelector('.cmdk-chip');
+    chip.click();
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+    input.value = 'app';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-scope-token')).not.toBeNull();
+  });
+
+  it('resets scope on reopen', () => {
+    const searchRegistry = TestBed.inject(SearchRegistryService);
+    searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+    pressOpenShortcut();
+    const chip: HTMLElement = fixture.nativeElement.querySelector('.cmdk-chip');
+    chip.click();
+    fixture.detectChanges();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    pressOpenShortcut();
+    expect(fixture.nativeElement.querySelector('.cmdk-scope-token')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.cmdk-chip-row')).not.toBeNull();
   });
 });

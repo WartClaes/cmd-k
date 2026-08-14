@@ -8,15 +8,29 @@
       (click)="$event.stopPropagation()"
       (keydown)="onKeydown($event)"
     >
-      <input
-        #searchInput
-        class="cmdk-input"
-        type="text"
-        aria-label="Search commands"
-        [attr.aria-activedescendant]="selectedCommand() ? 'cmdk-item-' + selectedCommand()!.id : null"
-        [value]="query()"
-        (input)="onQueryChange($any($event.target).value)"
-      />
+      <div class="cmdk-input-row">
+        @if (scopedProviderKey(); as scopedKey) {
+          <span class="cmdk-scope-token">{{ scopedKey }}</span>
+        }
+        <input
+          #searchInput
+          class="cmdk-input"
+          type="text"
+          aria-label="Search commands"
+          [attr.aria-activedescendant]="selectedCommand() ? 'cmdk-item-' + selectedCommand()!.id : null"
+          [value]="query()"
+          (input)="onQueryChange($any($event.target).value)"
+        />
+      </div>
+      @if (scopedProviderKey() === null && searchProviders().length > 0) {
+        <div class="cmdk-chip-row">
+          @for (provider of searchProviders(); track provider.key) {
+            <button type="button" class="cmdk-chip" (click)="selectProviderScope(provider.key)">
+              {{ provider.label }}
+            </button>
+          }
+        </div>
+      }
       <div class="cmdk-list" role="listbox">
         @for (group of groups(); track group.name) {
           <div class="cmdk-group">
