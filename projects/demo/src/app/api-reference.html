@@ -45,6 +45,50 @@
   </article>
 
   <article>
+    <h3>Search providers</h3>
+    <p>
+      A second registration surface, alongside commands. Call
+      <code>SearchRegistryService.register()</code> from anywhere to
+      attach an async data source to the palette — typing fans the query
+      out to every registered provider and merges the results into a
+      single flat list. With zero providers registered, typing behaves
+      exactly as it always has: Commands keep fuzzy-matching.
+    </p>
+    <pre class="doc-code"><code>{{ searchProviderSnippet }}</code></pre>
+    <pre class="doc-code"><code>{{ searchRegistrySnippet }}</code></pre>
+    <p>
+      A provider that's still running when <code>searchTimeoutMs</code>
+      (default 5000ms, configurable via <code>provideCmdk()</code>)
+      elapses contributes no results for that query — it doesn't block
+      the others.
+    </p>
+  </article>
+
+  <article>
+    <h3>Scoping a search</h3>
+    <p>
+      With one or more providers registered, typing a provider's
+      <code>key</code> followed by <code>:</code> (e.g.
+      <code>"fruits:"</code>) converts it into a scope token — only that
+      provider is queried until the token is removed with Backspace. The
+      same scoping is also available by clicking a category chip below
+      the search input.
+    </p>
+  </article>
+
+  <article>
+    <h3>CmdkIssueService</h3>
+    <p>
+      Every error this library catches on your behalf — a failing
+      command, a failing or slow search provider, a failing search result
+      — is logged via <code>console.error</code>/<code>console.warn</code>
+      and also reported through this service, so you can build your own
+      UI on top instead of the library imposing one.
+    </p>
+    <pre class="doc-code"><code>{{ cmdkIssueSnippet }}</code></pre>
+  </article>
+
+  <article>
     <h3>Shortcut rules</h3>
     <ul>
       <li>
