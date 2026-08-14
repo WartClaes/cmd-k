@@ -17,6 +17,7 @@ export class DemoActions {
       id: 'demo-show-alert',
       label: 'Show Alert',
       group: 'Actions',
+      icon: 'demo-icon-alert',
       shortcut: 'mod+j',
       execute: () => {
         this.log.log('Show Alert executed');

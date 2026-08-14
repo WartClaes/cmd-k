@@ -43,7 +43,12 @@
                 [attr.aria-selected]="$index === selectedIndex()"
                 (click)="runSearchResult(result)"
               >
-                <span class="cmdk-item-label">{{ result.label }}</span>
+                <span class="cmdk-item-main">
+                  @if (result.icon) {
+                    <span class="cmdk-item-icon" [class]="result.icon" aria-hidden="true"></span>
+                  }
+                  <span class="cmdk-item-label">{{ result.label }}</span>
+                </span>
                 @if (result.subtitle) {
                   <span class="cmdk-item-subtitle">{{ result.subtitle }}</span>
                 }
@@ -67,7 +72,12 @@
                   [attr.aria-selected]="match.item.id === selectedCommand()?.id"
                   (click)="runSelectedCommand(match.item)"
                 >
-                  <span class="cmdk-item-label">{{ resolveLabel(match.item) }}</span>
+                  <span class="cmdk-item-main">
+                    @if (match.item.icon) {
+                      <span class="cmdk-item-icon" [class]="match.item.icon" aria-hidden="true"></span>
+                    }
+                    <span class="cmdk-item-label">{{ resolveLabel(match.item) }}</span>
+                  </span>
                   @if (match.item.shortcut) {
                     <span class="cmdk-shortcut">{{ formatShortcut(match.item.shortcut) }}</span>
                   }
