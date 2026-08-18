@@ -2,7 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CmdkPaletteComponent } from './cmdk-palette';
 import { CommandRegistryService } from './command-registry';
 import { provideCmdk } from './cmdk-config';
+import { CmdkIssueService } from './cmdk-issue';
+import { RecentSearchesService } from './recent-searches';
 import { SearchRegistryService } from './search-registry';
+import type { SearchProvider } from './search.model';
 
 describe('CmdkPaletteComponent', () => {
   let fixture: ComponentFixture<CmdkPaletteComponent>;
@@ -650,5 +653,187 @@ describe('CmdkPaletteComponent', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  describe('recent searches', () => {
+    let searchRegistry: SearchRegistryService;
+    let recentSearches: RecentSearchesService;
+    let storedKey: string | null;
+
+    function reconfigure(): void {
+      fixture.nativeElement.remove();
+      TestBed.resetTestingModule();
+      Object.defineProperty(window.navigator, 'platform', { value: 'MacIntel', configurable: true });
+      TestBed.configureTestingModule({
+        imports: [CmdkPaletteComponent],
+        providers: [provideCmdk({ shortcut: 'mod+k', recentSearchesStorageKey: () => storedKey })],
+      });
+      fixture = TestBed.createComponent(CmdkPaletteComponent);
+      document.body.appendChild(fixture.nativeElement);
+      registry = TestBed.inject(CommandRegistryService);
+      searchRegistry = TestBed.inject(SearchRegistryService);
+      recentSearches = TestBed.inject(RecentSearchesService);
+      fixture.detectChanges();
+    }
+
+    function makeFruitsProvider(overrides: Partial<SearchProvider> = {}): SearchProvider {
+      return {
+        key: 'fruits',
+        label: 'fruits',
+        search: async () => [{ label: 'Apple', subtitle: '/fruits/apple', resultId: 'apple', execute: () => {} }],
+        resolve: async (resultId) =>
+          resultId === 'apple'
+            ? { label: 'Apple', subtitle: '/fruits/apple', resultId: 'apple', execute: () => {} }
+            : null,
+        ...overrides,
+      };
+    }
+
+    beforeEach(() => {
+      storedKey = 'recents';
+      localStorage.clear();
+      reconfigure();
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    it('does not render a Recent searches section with no recorded entries', () => {
+      searchRegistry.register(makeFruitsProvider());
+      pressOpenShortcut();
+      expect(fixture.nativeElement.textContent).not.toContain('Recent searches');
+    });
+
+    it('renders a recorded recent above Commands when unscoped and the query is empty', () => {
+      searchRegistry.register(makeFruitsProvider());
+      recentSearches.record('fruits', { label: 'Apple', subtitle: '/fruits/apple', resultId: 'apple', execute: () => {} });
+
+      pressOpenShortcut();
+
+      const items = fixture.nativeElement.querySelectorAll('.cmdk-item-label');
+      expect(items[0].textContent).toBe('Apple');
+    });
+
+    it('hides a recent entry whose provider is not currently registered, without deleting it', () => {
+      recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+
+      pressOpenShortcut();
+      expect(fixture.nativeElement.textContent).not.toContain('Recent searches');
+      expect(recentSearches.recent()).toHaveLength(1);
+
+      const unregister = searchRegistry.register(makeFruitsProvider());
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Recent searches');
+
+      unregister();
+    });
+
+    it('selecting a recent resolves it, executes it, and bumps it to the top', async () => {
+      const executed: string[] = [];
+      searchRegistry.register(
+        makeFruitsProvider({
+          resolve: async (resultId) => ({
+            label: 'Apple',
+            subtitle: '/fruits/apple',
+            resultId,
+            execute: () => {
+              executed.push(resultId);
+            },
+          }),
+        }),
+      );
+      recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+
+      pressOpenShortcut();
+      const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+      panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      fixture.detectChanges();
+      await Promise.resolve();
+      await Promise.resolve();
+      fixture.detectChanges();
+
+      expect(executed).toEqual(['apple']);
+      expect(fixture.nativeElement.querySelector('.cmdk-overlay')).toBeNull();
+      expect(recentSearches.recent()[0].resultId).toBe('apple');
+    });
+
+    it('a resolve() that returns null removes the entry and reports a recent-resolve issue', async () => {
+      const issues = TestBed.inject(CmdkIssueService);
+      const received: unknown[] = [];
+      issues.onIssue((issue) => received.push(issue));
+      searchRegistry.register(makeFruitsProvider({ resolve: async () => null }));
+      recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+
+      pressOpenShortcut();
+      const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+      panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      fixture.detectChanges();
+      await Promise.resolve();
+      await Promise.resolve();
+      fixture.detectChanges();
+
+      expect(recentSearches.recent()).toEqual([]);
+      expect(received).toEqual([{ source: 'recent-resolve', providerKey: 'fruits', resultId: 'apple', error: undefined }]);
+      expect(fixture.nativeElement.querySelector('.cmdk-overlay')).not.toBeNull();
+    });
+
+    it('a resolve() that rejects removes the entry, reports the issue, and keeps the palette open', async () => {
+      const issues = TestBed.inject(CmdkIssueService);
+      const received: unknown[] = [];
+      issues.onIssue((issue) => received.push(issue));
+      const failure = new Error('network down');
+      searchRegistry.register(makeFruitsProvider({ resolve: async () => Promise.reject(failure) }));
+      recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+
+      pressOpenShortcut();
+      const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+      panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      fixture.detectChanges();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+
+      expect(recentSearches.recent()).toEqual([]);
+      expect(received).toEqual([{ source: 'recent-resolve', providerKey: 'fruits', resultId: 'apple', error: failure }]);
+      expect(fixture.nativeElement.querySelector('.cmdk-overlay')).not.toBeNull();
+    });
+
+    it('selecting a live search result records it as a recent', async () => {
+      searchRegistry.register(makeFruitsProvider());
+
+      pressOpenShortcut();
+      const input = fixture.nativeElement.querySelector('.cmdk-input') as HTMLInputElement;
+      input.value = 'apple';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await Promise.resolve();
+      fixture.detectChanges();
+
+      const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+      panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(recentSearches.recent()).toHaveLength(1);
+      expect(recentSearches.recent()[0]).toEqual(
+        expect.objectContaining({ providerKey: 'fruits', resultId: 'apple', label: 'Apple' }),
+      );
+    });
+
+    it('ArrowDown moves selection from a recent into the Commands list', () => {
+      searchRegistry.register(makeFruitsProvider());
+      recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+      const unregisterCommand = registry.register({ label: 'Only Command', execute: () => {} });
+
+      pressOpenShortcut();
+      const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+      panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      fixture.detectChanges();
+
+      const selected = fixture.nativeElement.querySelector('.cmdk-item--selected .cmdk-item-label');
+      expect(selected.textContent).toBe('Only Command');
+
+      unregisterCommand();
+    });
   });
 });

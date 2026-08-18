@@ -6,6 +6,7 @@ import { CmdkIssueService } from './cmdk-issue';
 import { CommandRegistryService } from './command-registry';
 import { fuzzySearch } from './fuzzy-match';
 import { groupMatches } from './group-matches';
+import { RecentSearchesService, type RecentSearchEntry } from './recent-searches';
 import { SearchRegistryService } from './search-registry';
 import type { SearchResult } from './search.model';
 import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from './shortcut';
@@ -18,7 +19,8 @@ import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from '.
 })
 export class CmdkPaletteComponent {
   private readonly registry = inject(CommandRegistryService);
-  private readonly searchRegistry = inject(SearchRegistryService);
+  protected readonly searchRegistry = inject(SearchRegistryService);
+  private readonly recentSearches = inject(RecentSearchesService);
   private readonly issues = inject(CmdkIssueService);
   private readonly config = inject(CMDK_CONFIG);
   private readonly document = inject(DOCUMENT);
@@ -38,7 +40,6 @@ export class CmdkPaletteComponent {
   protected readonly results = computed(() => fuzzySearch(this.query(), this.registry.commands()));
   protected readonly groups = computed(() => groupMatches(this.results()));
   protected readonly flatMatches = computed(() => this.groups().flatMap((g) => g.matches));
-  protected readonly selectedCommand = computed(() => this.flatMatches()[this.selectedIndex()]?.item);
   protected readonly resolveLabel = resolveLabel;
   protected readonly formatShortcut = (shortcut: string) => formatShortcut(shortcut, this.isMac);
 
@@ -50,9 +51,38 @@ export class CmdkPaletteComponent {
 
   protected readonly selectedSearchResult = computed(() => this.searchResults()?.[this.selectedIndex()]);
 
+  protected readonly visibleRecents = computed(() => {
+    if (this.isSearchModeActive() || this.scopedProviderKey() !== null) {
+      return [] as readonly RecentSearchEntry[];
+    }
+    const registeredKeys = new Set(this.searchRegistry.providers().map((p) => p.key));
+    return this.recentSearches.recent().filter((entry) => registeredKeys.has(entry.providerKey));
+  });
+
+  protected readonly selectedRecent = computed(() => {
+    if (this.isSearchModeActive()) {
+      return undefined;
+    }
+    const recents = this.visibleRecents();
+    const index = this.selectedIndex();
+    return index < recents.length ? recents[index] : undefined;
+  });
+
+  protected readonly selectedCommand = computed(() => {
+    if (this.isSearchModeActive()) {
+      return undefined;
+    }
+    const offset = this.visibleRecents().length;
+    return this.flatMatches()[this.selectedIndex() - offset]?.item;
+  });
+
   protected readonly activeDescendantId = computed(() => {
     if (this.isSearchModeActive()) {
       return this.selectedSearchResult() ? `cmdk-item-search-${this.selectedIndex()}` : null;
+    }
+    const recent = this.selectedRecent();
+    if (recent) {
+      return `cmdk-item-recent-${recent.providerKey}-${recent.resultId}`;
     }
     return this.selectedCommand() ? `cmdk-item-${this.selectedCommand()!.id}` : null;
   });
@@ -79,7 +109,9 @@ export class CmdkPaletteComponent {
     });
 
     effect(() => {
-      const count = this.isSearchModeActive() ? (this.searchResults()?.length ?? 0) : this.flatMatches().length;
+      const count = this.isSearchModeActive()
+        ? (this.searchResults()?.length ?? 0)
+        : this.visibleRecents().length + this.flatMatches().length;
       if (this.selectedIndex() >= count) {
         this.selectedIndex.set(Math.max(0, count - 1));
       }
@@ -153,12 +185,17 @@ export class CmdkPaletteComponent {
         if (this.isSearchModeActive()) {
           const result = this.selectedSearchResult();
           if (result) {
-            this.runSearchResult(result);
+            this.runSearchResult(result, this.searchRegistry.providerKeyFor(result));
           }
         } else {
-          const command = this.selectedCommand();
-          if (command) {
-            this.runSelectedCommand(command);
+          const recent = this.selectedRecent();
+          if (recent) {
+            this.runRecentEntry(recent);
+          } else {
+            const command = this.selectedCommand();
+            if (command) {
+              this.runSelectedCommand(command);
+            }
           }
         }
         break;
@@ -191,7 +228,10 @@ export class CmdkPaletteComponent {
     this.close();
   }
 
-  protected runSearchResult(result: SearchResult): void {
+  protected runSearchResult(result: SearchResult, providerKey: string | undefined): void {
+    if (providerKey) {
+      this.recentSearches.record(providerKey, result);
+    }
     try {
       const outcome = result.execute();
       if (outcome instanceof Promise) {
@@ -205,6 +245,44 @@ export class CmdkPaletteComponent {
       this.issues.report({ source: 'search-result', label: result.label, error });
     }
     this.close();
+  }
+
+  protected runRecentEntry(entry: RecentSearchEntry): void {
+    const myGeneration = this.searchGeneration;
+    const provider = this.searchRegistry.providers().find((p) => p.key === entry.providerKey);
+    if (!provider?.resolve) {
+      this.reportRecentResolveFailure(entry);
+      return;
+    }
+    provider.resolve(entry.resultId).then(
+      (result) => {
+        if (myGeneration !== this.searchGeneration) {
+          return;
+        }
+        if (!result) {
+          this.reportRecentResolveFailure(entry);
+          return;
+        }
+        this.runSearchResult(result, entry.providerKey);
+      },
+      (error) => {
+        if (myGeneration !== this.searchGeneration) {
+          return;
+        }
+        this.reportRecentResolveFailure(entry, error);
+      },
+    );
+  }
+
+  private reportRecentResolveFailure(entry: RecentSearchEntry, error?: unknown): void {
+    console.error(`Recent search "${entry.label}" could not be resolved:`, error);
+    this.issues.report({
+      source: 'recent-resolve',
+      providerKey: entry.providerKey,
+      resultId: entry.resultId,
+      error,
+    });
+    this.recentSearches.removeEntry(entry.providerKey, entry.resultId);
   }
 
   private scheduleSearch(query: string, scopeKey: string | null): void {
@@ -223,7 +301,9 @@ export class CmdkPaletteComponent {
   }
 
   private moveSelection(delta: number): void {
-    const count = this.isSearchModeActive() ? (this.searchResults()?.length ?? 0) : this.flatMatches().length;
+    const count = this.isSearchModeActive()
+      ? (this.searchResults()?.length ?? 0)
+      : this.visibleRecents().length + this.flatMatches().length;
     if (count === 0) {
       return;
     }
