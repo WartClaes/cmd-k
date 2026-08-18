@@ -132,17 +132,34 @@ describe('RecentSearchesService', () => {
     expect(localStorage.getItem('recents')).toBeNull();
   });
 
-  it('clear() resyncs to a key changed before the effect flushes, so the later flush does not resurrect stale data', () => {
+  it('clear() resyncs to a key changed before the effect flushes, so switching back to the original key later still sees its untouched data', () => {
     const key = signal('recents-a');
     const service = setup(() => key());
     service.record('fruits', makeResult({ resultId: 'apple' }));
     expect(service.recent()).toHaveLength(1);
 
+    // Change the key but don't flush the constructor effect yet: internally,
+    // `syncedKey` is still 'recents-a' at this instant.
     key.set('recents-b');
+    // `clear()` must resync to 'recents-b' *before* acting, otherwise `syncedKey`
+    // is left stale at 'recents-a' even though we've moved on to 'recents-b'.
     service.clear();
+
+    // Switch back to the original key, whose storage was never touched by
+    // either `clear()` call (both only ever removeItem the *current* key,
+    // which was 'recents-b' at the time).
+    key.set('recents-a');
     TestBed.tick();
 
-    expect(service.recent()).toEqual([]);
+    // With the fix: syncedKey was correctly resynced to 'recents-b' inside
+    // clear(), so this tick sees currentKey() ('recents-a') !== syncedKey
+    // ('recents-b') and correctly reloads 'recents-a' storage -> [apple].
+    // Without the fix: syncedKey was left stale at 'recents-a', so this tick
+    // sees currentKey() ('recents-a') === stale syncedKey ('recents-a') and
+    // incorrectly skips the resync, leaving recent() stuck at [].
+    expect(service.recent()).toEqual([
+      expect.objectContaining({ providerKey: 'fruits', resultId: 'apple' }),
+    ]);
   });
 
   it('reads pre-existing valid JSON from storage on construction', () => {
