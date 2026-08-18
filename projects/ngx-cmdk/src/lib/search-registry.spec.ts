@@ -76,6 +76,31 @@ describe('SearchRegistryService', () => {
     expect(bSearch).toHaveBeenCalledWith('query');
     expect(aSearch).not.toHaveBeenCalled();
   });
+
+  it('tracks which provider produced each result, recoverable via providerKeyFor', async () => {
+    const fruitsProvider = makeProvider({
+      key: 'fruits',
+      search: async () => [{ label: 'Apple', resultId: 'apple', execute: () => {} }],
+    });
+    const veggiesProvider = makeProvider({
+      key: 'veggies',
+      search: async () => [{ label: 'Carrot', resultId: 'carrot', execute: () => {} }],
+    });
+    service.register(fruitsProvider);
+    service.register(veggiesProvider);
+
+    const results = await service.search('a');
+
+    const apple = results.find((r) => r.label === 'Apple')!;
+    const carrot = results.find((r) => r.label === 'Carrot')!;
+    expect(service.providerKeyFor(apple)).toBe('fruits');
+    expect(service.providerKeyFor(carrot)).toBe('veggies');
+  });
+
+  it('providerKeyFor returns undefined for a result that never went through search()', () => {
+    const foreignResult = { label: 'Untracked', execute: () => {} };
+    expect(service.providerKeyFor(foreignResult)).toBeUndefined();
+  });
 });
 
 describe('SearchRegistryService timeout/error handling', () => {

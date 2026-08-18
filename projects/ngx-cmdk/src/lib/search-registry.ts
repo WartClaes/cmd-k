@@ -30,6 +30,7 @@ export class SearchRegistryService {
   private readonly config = inject(CMDK_CONFIG);
   private readonly issues = inject(CmdkIssueService);
   private readonly providersMap = signal<Map<string, SearchProvider>>(new Map());
+  private readonly resultProviderKeys = new WeakMap<SearchResult, string>();
 
   readonly providers = computed<readonly SearchProvider[]>(() => Array.from(this.providersMap().values()));
   readonly hasProviders = computed(() => this.providers().length > 0);
@@ -58,8 +59,18 @@ export class SearchRegistryService {
     const all = this.providers();
     const targets = scopeKey ? all.filter((provider) => provider.key === scopeKey) : all;
     const resultsPerProvider = await Promise.all(
-      targets.map((provider) => searchWithTimeout(provider, query, this.config.searchTimeoutMs, this.issues)),
+      targets.map(async (provider) => {
+        const results = await searchWithTimeout(provider, query, this.config.searchTimeoutMs, this.issues);
+        for (const result of results) {
+          this.resultProviderKeys.set(result, provider.key);
+        }
+        return results;
+      }),
     );
     return resultsPerProvider.flat();
+  }
+
+  providerKeyFor(result: SearchResult): string | undefined {
+    return this.resultProviderKeys.get(result);
   }
 }
