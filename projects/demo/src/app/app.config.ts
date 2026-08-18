@@ -2,5 +2,8 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideCmdk } from 'ngx-cmdk';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideBrowserGlobalErrorListeners(), provideCmdk({ shortcut: 'mod+k' })],
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideCmdk({ shortcut: 'mod+k', recentSearchesStorageKey: () => 'ngx-cmdk-demo-recents' }),
+  ],
 };
