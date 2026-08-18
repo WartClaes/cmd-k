@@ -11,3 +11,5 @@ export { CmdkIssueService } from './lib/cmdk-issue';
 export type { CmdkIssue } from './lib/cmdk-issue';
 export type { SearchProvider, SearchResult } from './lib/search.model';
 export { SearchRegistryService } from './lib/search-registry';
+export { RecentSearchesService } from './lib/recent-searches';
+export type { RecentSearchEntry } from './lib/recent-searches';
