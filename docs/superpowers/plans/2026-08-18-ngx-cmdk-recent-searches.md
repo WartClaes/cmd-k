@@ -431,6 +431,7 @@ git commit -m "Add recentSearchesStorageKey to CmdkConfig"
 Create `projects/ngx-cmdk/src/lib/recent-searches.spec.ts`:
 
 ```ts
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RecentSearchesService } from './recent-searches';
 import { provideCmdk } from './cmdk-config';
@@ -512,32 +513,32 @@ describe('RecentSearchesService', () => {
   });
 
   it('reactively collapses to [] when the storage key becomes unavailable, and restores it when available again', () => {
-    let key: string | null = 'recents';
-    const service = setup(() => key);
+    const key = signal<string | null>('recents');
+    const service = setup(() => key());
     service.record('fruits', makeResult({ resultId: 'apple' }));
     expect(service.recent()).toHaveLength(1);
 
-    key = null;
+    key.set(null);
     TestBed.tick();
     expect(service.recent()).toEqual([]);
 
-    key = 'recents';
+    key.set('recents');
     TestBed.tick();
     expect(service.recent()).toHaveLength(1);
   });
 
   it('a different key reads/writes independently of the previous key', () => {
-    let key = 'recents-a';
-    const service = setup(() => key);
+    const key = signal('recents-a');
+    const service = setup(() => key());
     service.record('fruits', makeResult({ label: 'A-item', resultId: 'a1' }));
 
-    key = 'recents-b';
+    key.set('recents-b');
     TestBed.tick();
     expect(service.recent()).toEqual([]);
     service.record('fruits', makeResult({ label: 'B-item', resultId: 'b1' }));
     expect(service.recent().map((e) => e.label)).toEqual(['B-item']);
 
-    key = 'recents-a';
+    key.set('recents-a');
     TestBed.tick();
     expect(service.recent().map((e) => e.label)).toEqual(['A-item']);
   });
