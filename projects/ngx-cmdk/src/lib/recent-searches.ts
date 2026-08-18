@@ -71,6 +71,7 @@ export class RecentSearchesService {
   }
 
   clear(): void {
+    this.ensureSyncedToCurrentKey();
     this.entriesSignal.set([]);
     const key = this.currentKey();
     if (key) {

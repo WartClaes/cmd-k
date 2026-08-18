@@ -132,6 +132,19 @@ describe('RecentSearchesService', () => {
     expect(localStorage.getItem('recents')).toBeNull();
   });
 
+  it('clear() resyncs to a key changed before the effect flushes, so the later flush does not resurrect stale data', () => {
+    const key = signal('recents-a');
+    const service = setup(() => key());
+    service.record('fruits', makeResult({ resultId: 'apple' }));
+    expect(service.recent()).toHaveLength(1);
+
+    key.set('recents-b');
+    service.clear();
+    TestBed.tick();
+
+    expect(service.recent()).toEqual([]);
+  });
+
   it('reads pre-existing valid JSON from storage on construction', () => {
     localStorage.setItem(
       'recents',
