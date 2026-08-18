@@ -4,6 +4,7 @@ import { hasExactlyOneKey, hasRequiredModifier } from './shortcut';
 export interface CmdkConfig {
   shortcut: string;
   searchTimeoutMs: number;
+  recentSearchesStorageKey?: () => string | null;
 }
 
 export const DEFAULT_CMDK_CONFIG: CmdkConfig = { shortcut: 'mod+k', searchTimeoutMs: 5000 };

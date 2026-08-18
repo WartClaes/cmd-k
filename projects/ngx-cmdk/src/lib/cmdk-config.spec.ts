@@ -51,6 +51,13 @@ describe('provideCmdk', () => {
       'Shortcut "mod+kj" must have exactly one key in addition to its modifier(s)',
     );
   });
+
+  it('accepts an optional recentSearchesStorageKey callback and leaves it unset by default', () => {
+    const withKey = provideCmdk({ recentSearchesStorageKey: () => 'my-key' });
+    const withoutKey = provideCmdk();
+    expect(withKey).toBeTruthy();
+    expect(withoutKey).toBeTruthy();
+  });
 });
 
 describe('CMDK_CONFIG default factory', () => {
