@@ -17,7 +17,13 @@ const MAX_RECENT_ENTRIES = 10;
 @Injectable({ providedIn: 'root' })
 export class RecentSearchesService {
   private readonly config = inject(CMDK_CONFIG);
-  private readonly localStorageRef = inject(DOCUMENT).defaultView?.localStorage;
+  private readonly localStorageRef = (() => {
+    try {
+      return inject(DOCUMENT).defaultView?.localStorage;
+    } catch {
+      return undefined;
+    }
+  })();
   private readonly entriesSignal = signal<RecentSearchEntry[]>([]);
   private syncedKey: string | null = null;
 
@@ -99,7 +105,20 @@ export class RecentSearchesService {
     }
     try {
       const parsed: unknown = JSON.parse(raw);
-      return Array.isArray(parsed) ? (parsed as RecentSearchEntry[]) : [];
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed
+        .filter(
+          (entry): entry is RecentSearchEntry =>
+            !!entry &&
+            typeof entry === 'object' &&
+            typeof (entry as RecentSearchEntry).providerKey === 'string' &&
+            typeof (entry as RecentSearchEntry).resultId === 'string' &&
+            typeof (entry as RecentSearchEntry).label === 'string' &&
+            typeof (entry as RecentSearchEntry).selectedAt === 'number',
+        )
+        .slice(0, MAX_RECENT_ENTRIES);
     } catch (error) {
       console.warn(`Failed to parse recent searches from localStorage key "${key}":`, error);
       return [];

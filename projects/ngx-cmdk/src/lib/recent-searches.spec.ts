@@ -180,4 +180,65 @@ describe('RecentSearchesService', () => {
 
     expect(service.recent()).toEqual([]);
   });
+
+  it('filters out malformed elements from a persisted array, keeping only well-shaped entries', () => {
+    localStorage.setItem(
+      'recents',
+      JSON.stringify([
+        null,
+        { providerKey: 'fruits', resultId: 'apple', label: 'Apple', selectedAt: 100 },
+        { missingFields: true },
+        { providerKey: 'fruits', resultId: 42, label: 'Bad resultId type', selectedAt: 200 },
+        'not-an-object',
+      ]),
+    );
+
+    const service = setup(() => 'recents');
+
+    expect(service.recent()).toEqual([
+      { providerKey: 'fruits', resultId: 'apple', label: 'Apple', selectedAt: 100 },
+    ]);
+  });
+
+  it('caps a persisted array of more than 10 well-shaped entries to 10 on read', () => {
+    const entries = Array.from({ length: 15 }, (_, i) => ({
+      providerKey: 'fruits',
+      resultId: `id-${i}`,
+      label: `Item ${i}`,
+      selectedAt: i,
+    }));
+    localStorage.setItem('recents', JSON.stringify(entries));
+
+    const service = setup(() => 'recents');
+
+    expect(service.recent()).toHaveLength(10);
+    expect(service.recent()[0].resultId).toBe('id-0');
+    expect(service.recent().at(-1)!.resultId).toBe('id-9');
+  });
+
+  it('degrades to no persisted storage (without throwing) when accessing localStorage throws, e.g. a SecurityError in a storage-blocked context', () => {
+    const descriptor = Object.getOwnPropertyDescriptor(window, 'localStorage')!;
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get(): Storage {
+        throw new DOMException('The operation is insecure.', 'SecurityError');
+      },
+    });
+
+    try {
+      let service!: RecentSearchesService;
+      expect(() => {
+        service = setup(() => 'recents');
+      }).not.toThrow();
+      expect(service.recent()).toEqual([]);
+
+      // In-memory recording still works (graceful degradation); only persistence is unavailable.
+      expect(() => service.record('fruits', makeResult({ resultId: 'apple' }))).not.toThrow();
+      expect(service.recent()).toEqual([
+        expect.objectContaining({ providerKey: 'fruits', resultId: 'apple' }),
+      ]);
+    } finally {
+      Object.defineProperty(window, 'localStorage', descriptor);
+    }
+  });
 });
