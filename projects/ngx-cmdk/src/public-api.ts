@@ -13,3 +13,5 @@ export type { SearchProvider, SearchResult } from './lib/search/search.model';
 export { SearchRegistryService } from './lib/search/search-registry';
 export { RecentSearchesService } from './lib/search/recent-searches';
 export type { RecentSearchEntry } from './lib/search/recent-searches';
+export { FavouritesService } from './lib/favourites/favourites';
+export type { FavouriteEntry } from './lib/favourites/favourites';
