@@ -1,8 +1,8 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import type { Command, ResolvedCommand } from './command.model';
-import { CMDK_CONFIG } from './cmdk-config';
-import { CmdkIssueService } from './cmdk-issue';
+import { CMDK_CONFIG } from '../config/cmdk-config';
+import { CmdkIssueService } from '../issue/cmdk-issue';
 import {
   hasExactlyOneKey,
   hasRequiredModifier,
@@ -10,7 +10,7 @@ import {
   matchesShortcut,
   parseShortcut,
   type ParsedShortcut,
-} from './shortcut';
+} from '../shortcut/shortcut';
 
 function canonicalShortcutKey(parsed: ParsedShortcut): string {
   return `${parsed.ctrl}|${parsed.meta}|${parsed.alt}|${parsed.shift}|${parsed.key}`;

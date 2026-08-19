@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { CMDK_CONFIG } from './cmdk-config';
-import { CmdkIssueService } from './cmdk-issue';
+import { CMDK_CONFIG } from '../config/cmdk-config';
+import { CmdkIssueService } from '../issue/cmdk-issue';
 import type { SearchProvider, SearchResult } from './search.model';
 
 async function searchWithTimeout(

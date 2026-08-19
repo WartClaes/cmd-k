@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RecentSearchesService } from './recent-searches';
-import { provideCmdk } from './cmdk-config';
+import { provideCmdk } from '../config/cmdk-config';
 import type { SearchResult } from './search.model';
 
 function makeResult(overrides: Partial<SearchResult> = {}): SearchResult {

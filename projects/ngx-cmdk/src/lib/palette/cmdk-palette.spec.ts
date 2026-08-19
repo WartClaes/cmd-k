@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CmdkPaletteComponent } from './cmdk-palette';
-import { CommandRegistryService } from './command-registry';
-import { provideCmdk } from './cmdk-config';
-import { CmdkIssueService } from './cmdk-issue';
-import { RecentSearchesService } from './recent-searches';
-import { SearchRegistryService } from './search-registry';
-import type { SearchProvider } from './search.model';
+import { CommandRegistryService } from '../command/command-registry';
+import { provideCmdk } from '../config/cmdk-config';
+import { CmdkIssueService } from '../issue/cmdk-issue';
+import { RecentSearchesService } from '../search/recent-searches';
+import { SearchRegistryService } from '../search/search-registry';
+import type { SearchProvider } from '../search/search.model';
 
 describe('CmdkPaletteComponent', () => {
   let fixture: ComponentFixture<CmdkPaletteComponent>;

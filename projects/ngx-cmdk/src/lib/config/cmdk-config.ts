@@ -1,5 +1,5 @@
 import { EnvironmentProviders, InjectionToken, makeEnvironmentProviders } from '@angular/core';
-import { hasExactlyOneKey, hasRequiredModifier } from './shortcut';
+import { hasExactlyOneKey, hasRequiredModifier } from '../shortcut/shortcut';
 
 export interface CmdkConfig {
   shortcut: string;

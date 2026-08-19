@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, effect, inject, signal } from '@angular/core';
-import { CMDK_CONFIG } from './cmdk-config';
+import { CMDK_CONFIG } from '../config/cmdk-config';
 import type { SearchResult } from './search.model';
 
 export interface RecentSearchEntry {

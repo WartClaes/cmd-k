@@ -1,15 +1,15 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { resolveLabel, type ResolvedCommand } from './command.model';
-import { CMDK_CONFIG } from './cmdk-config';
-import { CmdkIssueService } from './cmdk-issue';
-import { CommandRegistryService } from './command-registry';
-import { fuzzySearch } from './fuzzy-match';
-import { groupMatches } from './group-matches';
-import { RecentSearchesService, type RecentSearchEntry } from './recent-searches';
-import { SearchRegistryService } from './search-registry';
-import type { SearchResult } from './search.model';
-import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from './shortcut';
+import { resolveLabel, type ResolvedCommand } from '../command/command.model';
+import { CMDK_CONFIG } from '../config/cmdk-config';
+import { CmdkIssueService } from '../issue/cmdk-issue';
+import { CommandRegistryService } from '../command/command-registry';
+import { fuzzySearch } from '../command/fuzzy-match';
+import { groupMatches } from '../command/group-matches';
+import { RecentSearchesService, type RecentSearchEntry } from '../search/recent-searches';
+import { SearchRegistryService } from '../search/search-registry';
+import type { SearchResult } from '../search/search.model';
+import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from '../shortcut/shortcut';
 
 @Component({
   selector: 'ngx-cmdk-palette',

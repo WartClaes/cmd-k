@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { SearchRegistryService } from './search-registry';
-import { CmdkIssueService } from './cmdk-issue';
-import { provideCmdk } from './cmdk-config';
+import { CmdkIssueService } from '../issue/cmdk-issue';
+import { provideCmdk } from '../config/cmdk-config';
 import type { SearchProvider } from './search.model';
 
 function makeProvider(overrides: Partial<SearchProvider> = {}): SearchProvider {
