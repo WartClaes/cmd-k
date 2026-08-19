@@ -52,6 +52,12 @@ describe('provideCmdk', () => {
     );
   });
 
+  it('throws when given a shortcut with a digit key', () => {
+    expect(() => provideCmdk({ shortcut: 'mod+1' })).toThrow(
+      'Shortcut "mod+1" cannot use a digit key — digits are reserved for favourite shortcuts (mod+1 through mod+9)',
+    );
+  });
+
   it('accepts an optional recentSearchesStorageKey callback and leaves it unset by default', () => {
     const withKey = provideCmdk({ recentSearchesStorageKey: () => 'my-key' });
     const withoutKey = provideCmdk();

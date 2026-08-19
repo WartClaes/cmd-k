@@ -101,6 +101,12 @@ describe('CommandRegistryService', () => {
     );
   });
 
+  it('throws when registering a shortcut with a digit key', () => {
+    expect(() => service.register(makeCommand({ id: 'search', shortcut: 'mod+1' }))).toThrow(
+      'Shortcut "mod+1" cannot use a digit key — digits are reserved for favourite shortcuts (mod+1 through mod+9)',
+    );
+  });
+
   it('throws when registering a shortcut that collides with the default open-shortcut', () => {
     expect(() => service.register(makeCommand({ id: 'x', shortcut: 'mod+k' }))).toThrow(
       'Shortcut "mod+k" collides with the configured open-shortcut "mod+k"',

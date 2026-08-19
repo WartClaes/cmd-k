@@ -1,5 +1,5 @@
 import { EnvironmentProviders, InjectionToken, makeEnvironmentProviders } from '@angular/core';
-import { hasExactlyOneKey, hasRequiredModifier } from '../shortcut/shortcut';
+import { hasExactlyOneKey, hasRequiredModifier, usesDigitKey } from '../shortcut/shortcut';
 
 export interface CmdkConfig {
   shortcut: string;
@@ -19,6 +19,11 @@ export function provideCmdk(config: Partial<CmdkConfig> = {}): EnvironmentProvid
   const merged = { ...DEFAULT_CMDK_CONFIG, ...config };
   if (!hasRequiredModifier(merged.shortcut)) {
     throw new Error(`Shortcut "${merged.shortcut}" must include a modifier (mod, ctrl, alt, or cmd)`);
+  }
+  if (usesDigitKey(merged.shortcut)) {
+    throw new Error(
+      `Shortcut "${merged.shortcut}" cannot use a digit key — digits are reserved for favourite shortcuts (mod+1 through mod+9)`,
+    );
   }
   if (!hasExactlyOneKey(merged.shortcut)) {
     throw new Error(`Shortcut "${merged.shortcut}" must have exactly one key in addition to its modifier(s)`);

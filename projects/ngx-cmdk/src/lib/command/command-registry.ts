@@ -9,6 +9,7 @@ import {
   isMacPlatform,
   matchesShortcut,
   parseShortcut,
+  usesDigitKey,
   type ParsedShortcut,
 } from '../shortcut/shortcut';
 
@@ -53,6 +54,11 @@ export class CommandRegistryService {
     if (command.shortcut) {
       if (!hasRequiredModifier(command.shortcut)) {
         throw new Error(`Shortcut "${command.shortcut}" must include a modifier (mod, ctrl, alt, or cmd)`);
+      }
+      if (usesDigitKey(command.shortcut)) {
+        throw new Error(
+          `Shortcut "${command.shortcut}" cannot use a digit key — digits are reserved for favourite shortcuts (mod+1 through mod+9)`,
+        );
       }
       if (!hasExactlyOneKey(command.shortcut)) {
         throw new Error(`Shortcut "${command.shortcut}" must have exactly one key in addition to its modifier(s)`);
