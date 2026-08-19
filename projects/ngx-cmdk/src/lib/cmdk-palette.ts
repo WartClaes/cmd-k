@@ -161,6 +161,7 @@ export class CmdkPaletteComponent {
 
   protected selectProviderScope(key: string): void {
     this.scopedProviderKey.set(key);
+    this.selectedIndex.set(0);
     this.searchResults.set(null);
     this.scheduleSearch(this.query(), key);
     this.searchInput()?.nativeElement.focus();
@@ -204,6 +205,7 @@ export class CmdkPaletteComponent {
         if (this.scopedProviderKey() !== null && this.query() === '') {
           event.preventDefault();
           this.scopedProviderKey.set(null);
+          this.selectedIndex.set(0);
         }
         break;
       case 'Tab':

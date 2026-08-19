@@ -759,6 +759,7 @@ describe('CmdkPaletteComponent', () => {
     });
 
     it('a resolve() that returns null removes the entry and reports a recent-resolve issue', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       const issues = TestBed.inject(CmdkIssueService);
       const received: unknown[] = [];
       issues.onIssue((issue) => received.push(issue));
@@ -776,9 +777,12 @@ describe('CmdkPaletteComponent', () => {
       expect(recentSearches.recent()).toEqual([]);
       expect(received).toEqual([{ source: 'recent-resolve', providerKey: 'fruits', resultId: 'apple', error: undefined }]);
       expect(fixture.nativeElement.querySelector('.cmdk-overlay')).not.toBeNull();
+      expect(consoleError).toHaveBeenCalled();
+      consoleError.mockRestore();
     });
 
     it('a resolve() that rejects removes the entry, reports the issue, and keeps the palette open', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       const issues = TestBed.inject(CmdkIssueService);
       const received: unknown[] = [];
       issues.onIssue((issue) => received.push(issue));
@@ -796,6 +800,8 @@ describe('CmdkPaletteComponent', () => {
       expect(recentSearches.recent()).toEqual([]);
       expect(received).toEqual([{ source: 'recent-resolve', providerKey: 'fruits', resultId: 'apple', error: failure }]);
       expect(fixture.nativeElement.querySelector('.cmdk-overlay')).not.toBeNull();
+      expect(consoleError).toHaveBeenCalled();
+      consoleError.mockRestore();
     });
 
     it('selecting a live search result records it as a recent', async () => {
@@ -818,6 +824,21 @@ describe('CmdkPaletteComponent', () => {
       expect(recentSearches.recent()[0]).toEqual(
         expect.objectContaining({ providerKey: 'fruits', resultId: 'apple', label: 'Apple' }),
       );
+    });
+
+    it('hides the Recent searches section while scoped to a provider, even with an empty query', () => {
+      searchRegistry.register(makeFruitsProvider());
+      recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+
+      pressOpenShortcut();
+      expect(fixture.nativeElement.textContent).toContain('Recent searches');
+
+      const chip: HTMLElement = fixture.nativeElement.querySelector('.cmdk-chip');
+      chip.click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.cmdk-input').value).toBe('');
+      expect(fixture.nativeElement.textContent).not.toContain('Recent searches');
     });
 
     it('ArrowDown moves selection from a recent into the Commands list', () => {
