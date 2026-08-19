@@ -62,4 +62,15 @@ describe('CmdkIssueService', () => {
     expect(other).toHaveBeenCalledWith(issue);
     consoleError.mockRestore();
   });
+
+  it('reports a recent-resolve issue and delivers it to listeners', () => {
+    const received: unknown[] = [];
+    service.onIssue((issue) => received.push(issue));
+
+    service.report({ source: 'recent-resolve', providerKey: 'fruits', resultId: 'apple', error: new Error('gone') });
+
+    expect(received).toEqual([
+      { source: 'recent-resolve', providerKey: 'fruits', resultId: 'apple', error: new Error('gone') },
+    ]);
+  });
 });

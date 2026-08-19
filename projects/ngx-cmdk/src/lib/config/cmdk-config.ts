@@ -1,9 +1,10 @@
 import { EnvironmentProviders, InjectionToken, makeEnvironmentProviders } from '@angular/core';
-import { hasExactlyOneKey, hasRequiredModifier } from './shortcut';
+import { hasExactlyOneKey, hasRequiredModifier } from '../shortcut/shortcut';
 
 export interface CmdkConfig {
   shortcut: string;
   searchTimeoutMs: number;
+  recentSearchesStorageKey?: () => string | null;
 }
 
 export const DEFAULT_CMDK_CONFIG: CmdkConfig = { shortcut: 'mod+k', searchTimeoutMs: 5000 };

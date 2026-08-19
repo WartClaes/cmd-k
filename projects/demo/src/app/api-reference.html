@@ -92,6 +92,34 @@
   </article>
 
   <article>
+    <h3>Recent searches</h3>
+    <p>
+      Opt-in and fully hard-gated: with no <code>recentSearchesStorageKey</code>
+      configured, nothing is tracked, persisted, or rendered — zero behavior
+      change. Configure it and every search-result selection (not Commands)
+      is remembered to <code>localStorage</code> under the key your callback
+      returns, and reappears in a "Recent searches" section above Commands
+      the next time the palette opens with an empty, unscoped query — even
+      after a reload. The key is a plain callback, not a static string, so a
+      host app can scope it per signed-in user (e.g.
+      <code>() =&gt; userId() ? 'myapp-recents-' + userId() : null</code>) to
+      avoid leaking one account's history to another on a shared device.
+    </p>
+    <p>
+      A result only becomes a persistable recent if its provider sets
+      <code>resultId</code>; selecting a persisted recent from a previous
+      session calls that provider's <code>resolve(resultId)</code> to
+      reconstruct a fresh, live result (never called just to list recents —
+      only when one is actually picked). If the provider that produced a
+      recent isn't currently registered, that entry is hidden from the list
+      but left untouched in storage — it reappears once the provider
+      registers again. If <code>resolve()</code> fails or returns
+      <code>null</code>, the entry is confirmed gone and removed for real.
+    </p>
+    <pre class="doc-code"><code>{{ recentSearchesSnippet }}</code></pre>
+  </article>
+
+  <article>
     <h3>CmdkIssueService</h3>
     <p>
       Every error this library catches on your behalf — a failing

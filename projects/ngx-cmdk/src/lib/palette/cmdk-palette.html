@@ -41,7 +41,7 @@
                 [class.cmdk-item--selected]="$index === selectedIndex()"
                 role="option"
                 [attr.aria-selected]="$index === selectedIndex()"
-                (click)="runSearchResult(result)"
+                (click)="runSearchResult(result, searchRegistry.providerKeyFor(result))"
               >
                 <span class="cmdk-item-main">
                   @if (result.icon) {
@@ -60,6 +60,31 @@
             <div class="cmdk-empty">Searching…</div>
           }
         } @else {
+          @if (visibleRecents().length > 0) {
+            <div class="cmdk-group">
+              <div class="cmdk-group-label">Recent searches</div>
+              @for (recent of visibleRecents(); track recent.providerKey + ':' + recent.resultId) {
+                <div
+                  [id]="'cmdk-item-recent-' + recent.providerKey + '-' + recent.resultId"
+                  class="cmdk-item"
+                  [class.cmdk-item--selected]="$index === selectedIndex()"
+                  role="option"
+                  [attr.aria-selected]="$index === selectedIndex()"
+                  (click)="runRecentEntry(recent)"
+                >
+                  <span class="cmdk-item-main">
+                    @if (recent.icon) {
+                      <span class="cmdk-item-icon" [class]="recent.icon" aria-hidden="true"></span>
+                    }
+                    <span class="cmdk-item-label">{{ recent.label }}</span>
+                  </span>
+                  @if (recent.subtitle) {
+                    <span class="cmdk-item-subtitle">{{ recent.subtitle }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
           @for (group of groups(); track group.name) {
             <div class="cmdk-group">
               <div class="cmdk-group-label">{{ group.name }}</div>
@@ -85,7 +110,9 @@
               }
             </div>
           } @empty {
-            <div class="cmdk-empty">No matching commands</div>
+            @if (visibleRecents().length === 0) {
+              <div class="cmdk-empty">No matching commands</div>
+            }
           }
         }
       </div>

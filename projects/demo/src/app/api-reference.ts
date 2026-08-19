@@ -32,6 +32,7 @@ providers: [provideCmdk({ shortcut: 'mod+k', searchTimeoutMs: 5000 })]`;
   label: string;
   subtitle?: string;      // e.g. "/fruits/apple"
   icon?: string;
+  resultId?: string;      // set this to make the result persistable as a "recent"
   execute: () => void | Promise<void>;
 }
 
@@ -40,6 +41,7 @@ interface SearchProvider {
   label: string;           // chip display text
   icon?: string;
   search: (query: string) => Promise<SearchResult[]>;
+  resolve?: (resultId: string) => Promise<SearchResult | null>;  // reconstructs a persisted recent
 }`;
 
   protected readonly searchRegistrySnippet = `class SearchRegistryService {
@@ -48,10 +50,31 @@ interface SearchProvider {
   search(query: string, scopeKey?: string): Promise<SearchResult[]>;
 }`;
 
+  protected readonly recentSearchesSnippet = `function provideCmdk(config?: {
+  shortcut?: string;
+  searchTimeoutMs?: number;
+  recentSearchesStorageKey?: () => string | null;   // unset = feature is fully off
+}): EnvironmentProviders;
+
+interface RecentSearchEntry {
+  providerKey: string;
+  resultId: string;
+  label: string;
+  subtitle?: string;
+  icon?: string;
+  selectedAt: number;
+}
+
+class RecentSearchesService {
+  readonly recent: Signal<readonly RecentSearchEntry[]>;   // most-recent-first, capped at 10
+  clear(): void;                                            // e.g. call this on logout
+}`;
+
   protected readonly cmdkIssueSnippet = `type CmdkIssue =
   | { source: 'command'; commandId: string; error: unknown }
   | { source: 'search-provider'; key: string; query: string; reason: 'timeout' | 'error'; error?: unknown }
-  | { source: 'search-result'; label: string; error: unknown };
+  | { source: 'search-result'; label: string; error: unknown }
+  | { source: 'recent-resolve'; providerKey: string; resultId: string; error?: unknown };
 
 class CmdkIssueService {
   onIssue(callback: (issue: CmdkIssue) => void): () => void;

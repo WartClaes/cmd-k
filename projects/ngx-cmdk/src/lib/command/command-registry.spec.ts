@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { CommandRegistryService } from './command-registry';
 import type { Command } from './command.model';
-import { provideCmdk } from './cmdk-config';
-import { CmdkIssueService } from './cmdk-issue';
+import { provideCmdk } from '../config/cmdk-config';
+import { CmdkIssueService } from '../issue/cmdk-issue';
 
 function makeCommand(overrides: Partial<Command> = {}): Command {
   return { label: 'Test Command', execute: () => {}, ...overrides };

@@ -4,6 +4,9 @@
     Registers a "fruits" search provider (with a simulated 150ms delay, to
     show the loading state honestly). Type a query in the palette, or
     scope to it first by clicking the "fruits" chip or typing
-    <code>fruits:</code>.
+    <code>fruits:</code>. Selecting a result is remembered as a "Recent
+    search" and reappears above Commands next time you open the palette
+    with an empty query — even after a page reload.
   </p>
+  <button type="button" (click)="clearRecents()">Clear recent searches</button>
 </section>
