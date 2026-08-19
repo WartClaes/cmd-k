@@ -5,6 +5,8 @@ export interface CmdkConfig {
   shortcut: string;
   searchTimeoutMs: number;
   recentSearchesStorageKey?: () => string | null;
+  favouritesStorageKey?: () => string | null;
+  navigate?: (path: string) => void | Promise<void>;
 }
 
 export const DEFAULT_CMDK_CONFIG: CmdkConfig = { shortcut: 'mod+k', searchTimeoutMs: 5000 };

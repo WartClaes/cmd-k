@@ -4,7 +4,8 @@ export type CmdkIssue =
   | { source: 'command'; commandId: string; error: unknown }
   | { source: 'search-provider'; key: string; query: string; reason: 'timeout' | 'error'; error?: unknown }
   | { source: 'search-result'; label: string; error: unknown }
-  | { source: 'recent-resolve'; providerKey: string; resultId: string; error?: unknown };
+  | { source: 'recent-resolve'; providerKey: string; resultId: string; error?: unknown }
+  | { source: 'favourite-navigate'; label: string; path: string; error: unknown };
 
 @Injectable({ providedIn: 'root' })
 export class CmdkIssueService {

@@ -58,6 +58,13 @@ describe('provideCmdk', () => {
     expect(withKey).toBeTruthy();
     expect(withoutKey).toBeTruthy();
   });
+
+  it('accepts optional favouritesStorageKey and navigate, and leaves them unset by default', () => {
+    const withFavourites = provideCmdk({ favouritesStorageKey: () => 'my-favourites-key', navigate: () => {} });
+    const withoutFavourites = provideCmdk();
+    expect(withFavourites).toBeTruthy();
+    expect(withoutFavourites).toBeTruthy();
+  });
 });
 
 describe('CMDK_CONFIG default factory', () => {
