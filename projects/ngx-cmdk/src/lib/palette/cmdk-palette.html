@@ -150,6 +150,14 @@
             }
           }
         </div>
+        <div class="cmdk-footer">
+          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">↑↓</span> Navigate</span>
+          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">↵</span> Select</span>
+          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">Esc</span> Close</span>
+          @if (canOpenSettings()) {
+            <span class="cmdk-footer-hint"><span class="cmdk-footer-key">,</span> Settings</span>
+          }
+        </div>
       }
     </div>
   </div>
