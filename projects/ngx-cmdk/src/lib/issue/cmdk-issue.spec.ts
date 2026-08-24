@@ -73,4 +73,25 @@ describe('CmdkIssueService', () => {
       { source: 'recent-resolve', providerKey: 'fruits', resultId: 'apple', error: new Error('gone') },
     ]);
   });
+
+  it('reports a favourite-navigate issue and delivers it to listeners', () => {
+    const received: unknown[] = [];
+    service.onIssue((issue) => received.push(issue));
+
+    service.report({
+      source: 'favourite-navigate',
+      label: 'Production orders',
+      path: '/production-orders',
+      error: new Error('navigation failed'),
+    });
+
+    expect(received).toEqual([
+      {
+        source: 'favourite-navigate',
+        label: 'Production orders',
+        path: '/production-orders',
+        error: new Error('navigation failed'),
+      },
+    ]);
+  });
 });

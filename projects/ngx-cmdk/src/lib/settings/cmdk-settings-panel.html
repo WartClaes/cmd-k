@@ -1,0 +1,84 @@
+<div #settingsRoot class="cmdk-settings" tabindex="-1" (keydown)="onKeydown($event)">
+  @if (showFavouritesSection()) {
+    <div class="cmdk-settings-section">
+      <div class="cmdk-settings-section-label">Favourites</div>
+      @for (favourite of favouritesService.favourites(); track favourite.id) {
+        <div class="cmdk-settings-row">
+          <div class="cmdk-settings-move-buttons">
+            <button
+              type="button"
+              class="cmdk-settings-move-button"
+              (click)="favouritesService.moveUp(favourite.id)"
+              aria-label="Move up"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              class="cmdk-settings-move-button"
+              (click)="favouritesService.moveDown(favourite.id)"
+              aria-label="Move down"
+            >
+              ↓
+            </button>
+          </div>
+          <input class="cmdk-settings-input" type="text" [value]="favourite.label" readonly />
+          <input class="cmdk-settings-input" type="text" [value]="favourite.path" readonly />
+          <button
+            type="button"
+            class="cmdk-settings-remove-button"
+            (click)="favouritesService.remove(favourite.id)"
+            aria-label="Remove favourite"
+          >
+            ×
+          </button>
+        </div>
+      }
+      @if (favouritesService.favourites().length < 9) {
+        <div class="cmdk-settings-add-row">
+          <input
+            #labelInput
+            class="cmdk-settings-input"
+            type="text"
+            placeholder="Label"
+            [value]="newLabel()"
+            (input)="newLabel.set($any($event.target).value)"
+          />
+          <input
+            class="cmdk-settings-input"
+            type="text"
+            placeholder="Path"
+            [value]="newPath()"
+            (input)="newPath.set($any($event.target).value)"
+            (keydown.enter)="submitAdd()"
+          />
+          <button
+            type="button"
+            class="cmdk-settings-add-button"
+            [disabled]="!canSubmit()"
+            (click)="submitAdd()"
+            aria-label="Add favourite"
+          >
+            ↵
+          </button>
+        </div>
+      } @else {
+        <p class="cmdk-settings-limit-message">Maximum of 9 favourites reached — remove one to add another.</p>
+      }
+    </div>
+  }
+  @if (showRecentSearchesSection()) {
+    <div class="cmdk-settings-section">
+      <div class="cmdk-settings-section-label">Recent searches</div>
+      <button type="button" class="cmdk-settings-clear-button" (click)="clearRecentSearches()">
+        Clear recent searches
+      </button>
+    </div>
+  }
+  <div class="cmdk-settings-footer">
+    <button type="button" class="cmdk-settings-close-button" (click)="close.emit()">
+      <span class="cmdk-settings-close-hint">,</span>
+      CLOSE SETTINGS
+    </button>
+  </div>
+</div>

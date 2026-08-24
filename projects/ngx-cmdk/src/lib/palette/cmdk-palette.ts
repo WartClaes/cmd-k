@@ -1,19 +1,35 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, DestroyRef, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { resolveLabel, type ResolvedCommand } from '../command/command.model';
 import { CMDK_CONFIG } from '../config/cmdk-config';
 import { CmdkIssueService } from '../issue/cmdk-issue';
 import { CommandRegistryService } from '../command/command-registry';
+import { FavouritesService, type FavouriteEntry } from '../favourites/favourites';
 import { fuzzySearch } from '../command/fuzzy-match';
 import { groupMatches } from '../command/group-matches';
 import { RecentSearchesService, type RecentSearchEntry } from '../search/recent-searches';
 import { SearchRegistryService } from '../search/search-registry';
 import type { SearchResult } from '../search/search.model';
-import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from '../shortcut/shortcut';
+import { CmdkSettingsPanelComponent } from '../settings/cmdk-settings-panel';
+import {
+  formatShortcut,
+  isMacPlatform,
+  matchesShortcut,
+  parseShortcut,
+} from '../shortcut/shortcut';
 
 @Component({
   selector: 'ngx-cmdk-palette',
-  imports: [],
+  imports: [CmdkSettingsPanelComponent],
   templateUrl: './cmdk-palette.html',
   styleUrl: './cmdk-palette.css',
 })
@@ -21,6 +37,7 @@ export class CmdkPaletteComponent {
   private readonly registry = inject(CommandRegistryService);
   protected readonly searchRegistry = inject(SearchRegistryService);
   private readonly recentSearches = inject(RecentSearchesService);
+  private readonly favourites = inject(FavouritesService);
   private readonly issues = inject(CmdkIssueService);
   private readonly config = inject(CMDK_CONFIG);
   private readonly document = inject(DOCUMENT);
@@ -35,7 +52,14 @@ export class CmdkPaletteComponent {
   protected readonly query = signal('');
   protected readonly selectedIndex = signal(0);
   protected readonly scopedProviderKey = signal<string | null>(null);
+  protected readonly settingsOpen = signal(false);
   protected readonly searchProviders = computed(() => this.searchRegistry.providers());
+
+  protected readonly settingsAvailable = computed(
+    () =>
+      this.config.favouritesStorageKey?.() != null ||
+      this.config.recentSearchesStorageKey?.() != null,
+  );
 
   protected readonly results = computed(() => fuzzySearch(this.query(), this.registry.commands()));
   protected readonly groups = computed(() => groupMatches(this.results()));
@@ -49,7 +73,9 @@ export class CmdkPaletteComponent {
     () => this.searchRegistry.hasProviders() && this.query().trim().length > 0,
   );
 
-  protected readonly selectedSearchResult = computed(() => this.searchResults()?.[this.selectedIndex()]);
+  protected readonly selectedSearchResult = computed(
+    () => this.searchResults()?.[this.selectedIndex()],
+  );
 
   protected readonly visibleRecents = computed(() => {
     if (this.isSearchModeActive() || this.scopedProviderKey() !== null) {
@@ -58,6 +84,20 @@ export class CmdkPaletteComponent {
     const registeredKeys = new Set(this.searchRegistry.providers().map((p) => p.key));
     return this.recentSearches.recent().filter((entry) => registeredKeys.has(entry.providerKey));
   });
+
+  protected readonly visibleFavourites = computed(() => {
+    if (this.isSearchModeActive() || this.scopedProviderKey() !== null) {
+      return [] as readonly FavouriteEntry[];
+    }
+    return this.favourites.favourites();
+  });
+
+  protected readonly favouriteShortcuts = computed(() =>
+    this.favourites.favourites().map((favourite, index) => ({
+      favourite,
+      parsed: parseShortcut(`mod+${index + 1}`, this.isMac),
+    })),
+  );
 
   protected readonly selectedRecent = computed(() => {
     if (this.isSearchModeActive()) {
@@ -76,6 +116,16 @@ export class CmdkPaletteComponent {
     return this.flatMatches()[this.selectedIndex() - offset]?.item;
   });
 
+  protected readonly selectedFavourite = computed(() => {
+    if (this.isSearchModeActive()) {
+      return undefined;
+    }
+    const offset = this.visibleRecents().length + this.flatMatches().length;
+    const favourites = this.visibleFavourites();
+    const index = this.selectedIndex() - offset;
+    return index >= 0 && index < favourites.length ? favourites[index] : undefined;
+  });
+
   protected readonly activeDescendantId = computed(() => {
     if (this.isSearchModeActive()) {
       return this.selectedSearchResult() ? `cmdk-item-search-${this.selectedIndex()}` : null;
@@ -83,6 +133,10 @@ export class CmdkPaletteComponent {
     const recent = this.selectedRecent();
     if (recent) {
       return `cmdk-item-recent-${recent.providerKey}-${recent.resultId}`;
+    }
+    const favourite = this.selectedFavourite();
+    if (favourite) {
+      return `cmdk-item-favourite-${favourite.id}`;
     }
     return this.selectedCommand() ? `cmdk-item-${this.selectedCommand()!.id}` : null;
   });
@@ -99,7 +153,9 @@ export class CmdkPaletteComponent {
       }
     };
     this.document.addEventListener('keydown', onOpenShortcut);
-    inject(DestroyRef).onDestroy(() => this.document.removeEventListener('keydown', onOpenShortcut));
+    inject(DestroyRef).onDestroy(() =>
+      this.document.removeEventListener('keydown', onOpenShortcut),
+    );
     inject(DestroyRef).onDestroy(() => clearTimeout(this.searchDebounceTimer));
 
     effect(() => {
@@ -111,7 +167,9 @@ export class CmdkPaletteComponent {
     effect(() => {
       const count = this.isSearchModeActive()
         ? (this.searchResults()?.length ?? 0)
-        : this.visibleRecents().length + this.flatMatches().length;
+        : this.visibleRecents().length +
+          this.flatMatches().length +
+          this.visibleFavourites().length;
       if (this.selectedIndex() >= count) {
         this.selectedIndex.set(Math.max(0, count - 1));
       }
@@ -127,6 +185,7 @@ export class CmdkPaletteComponent {
     this.selectedIndex.set(0);
     this.scopedProviderKey.set(null);
     this.searchResults.set(null);
+    this.settingsOpen.set(false);
     this.isOpen.set(true);
   }
 
@@ -146,7 +205,9 @@ export class CmdkPaletteComponent {
       const colonIndex = value.indexOf(':');
       if (colonIndex !== -1) {
         const candidateKey = value.slice(0, colonIndex).trim().toLowerCase();
-        const matchedProvider = this.searchProviders().find((p) => p.key.toLowerCase() === candidateKey);
+        const matchedProvider = this.searchProviders().find(
+          (p) => p.key.toLowerCase() === candidateKey,
+        );
         if (matchedProvider) {
           this.scopedProviderKey.set(matchedProvider.key);
           value = value.slice(colonIndex + 1).trimStart();
@@ -193,9 +254,14 @@ export class CmdkPaletteComponent {
           if (recent) {
             this.runRecentEntry(recent);
           } else {
-            const command = this.selectedCommand();
-            if (command) {
-              this.runSelectedCommand(command);
+            const favourite = this.selectedFavourite();
+            if (favourite) {
+              this.runFavourite(favourite);
+            } else {
+              const command = this.selectedCommand();
+              if (command) {
+                this.runSelectedCommand(command);
+              }
             }
           }
         }
@@ -206,6 +272,12 @@ export class CmdkPaletteComponent {
           event.preventDefault();
           this.scopedProviderKey.set(null);
           this.selectedIndex.set(0);
+        }
+        break;
+      case ',':
+        if (this.settingsAvailable() && this.query() === '' && this.scopedProviderKey() === null) {
+          event.preventDefault();
+          this.settingsOpen.set(true);
         }
         break;
       case 'Tab':
@@ -220,6 +292,14 @@ export class CmdkPaletteComponent {
         if (command) {
           event.preventDefault();
           this.runSelectedCommand(command);
+        } else {
+          const favouriteMatch = this.favouriteShortcuts().find(({ parsed }) =>
+            matchesShortcut(event, parsed),
+          );
+          if (favouriteMatch) {
+            event.preventDefault();
+            this.runFavourite(favouriteMatch.favourite);
+          }
         }
       }
     }
@@ -276,6 +356,46 @@ export class CmdkPaletteComponent {
     );
   }
 
+  protected runFavourite(favourite: FavouriteEntry): void {
+    const navigate = this.config.navigate;
+    if (!navigate) {
+      console.error(
+        `Favourite "${favourite.label}" could not navigate: no "navigate" callback configured via provideCmdk()`,
+      );
+      this.issues.report({
+        source: 'favourite-navigate',
+        label: favourite.label,
+        path: favourite.path,
+        error: new Error('No "navigate" callback configured via provideCmdk()'),
+      });
+      this.close();
+      return;
+    }
+    try {
+      const outcome = navigate(favourite.path);
+      if (outcome instanceof Promise) {
+        outcome.catch((error) => {
+          console.error(`Favourite "${favourite.label}" failed to navigate:`, error);
+          this.issues.report({
+            source: 'favourite-navigate',
+            label: favourite.label,
+            path: favourite.path,
+            error,
+          });
+        });
+      }
+    } catch (error) {
+      console.error(`Favourite "${favourite.label}" failed to navigate:`, error);
+      this.issues.report({
+        source: 'favourite-navigate',
+        label: favourite.label,
+        path: favourite.path,
+        error,
+      });
+    }
+    this.close();
+  }
+
   private reportRecentResolveFailure(entry: RecentSearchEntry, error?: unknown): void {
     console.error(`Recent search "${entry.label}" could not be resolved:`, error);
     this.issues.report({
@@ -305,7 +425,7 @@ export class CmdkPaletteComponent {
   private moveSelection(delta: number): void {
     const count = this.isSearchModeActive()
       ? (this.searchResults()?.length ?? 0)
-      : this.visibleRecents().length + this.flatMatches().length;
+      : this.visibleRecents().length + this.flatMatches().length + this.visibleFavourites().length;
     if (count === 0) {
       return;
     }

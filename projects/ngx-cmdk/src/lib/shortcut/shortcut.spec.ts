@@ -1,4 +1,4 @@
-import { formatShortcut, hasExactlyOneKey, hasRequiredModifier, matchesShortcut, parseShortcut } from './shortcut';
+import { formatShortcut, hasExactlyOneKey, hasRequiredModifier, matchesShortcut, parseShortcut, usesDigitKey } from './shortcut';
 
 describe('parseShortcut', () => {
   it('resolves "mod" to meta on Mac', () => {
@@ -101,6 +101,28 @@ describe('hasExactlyOneKey', () => {
 
   it('returns false when the key token is more than one character (e.g. a missing "+")', () => {
     expect(hasExactlyOneKey('mod+kj')).toBe(false);
+  });
+
+  it('returns false for a digit key', () => {
+    expect(hasExactlyOneKey('mod+1')).toBe(false);
+  });
+});
+
+describe('usesDigitKey', () => {
+  it('returns true for a single digit key with modifiers', () => {
+    expect(usesDigitKey('mod+1')).toBe(true);
+  });
+
+  it('returns false for a letter key', () => {
+    expect(usesDigitKey('mod+k')).toBe(false);
+  });
+
+  it('returns false when no key token is present', () => {
+    expect(usesDigitKey('mod')).toBe(false);
+  });
+
+  it('returns false when more than one key token is present', () => {
+    expect(usesDigitKey('mod+1+2')).toBe(false);
   });
 });
 
