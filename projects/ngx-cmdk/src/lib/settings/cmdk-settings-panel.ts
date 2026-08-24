@@ -30,6 +30,7 @@ export class CmdkSettingsPanelComponent {
   protected readonly settingsRoot = viewChild<ElementRef<HTMLElement>>('settingsRoot');
   protected readonly newLabel = signal('');
   protected readonly newPath = signal('');
+  protected readonly justClearedRecentSearches = signal(false);
 
   protected readonly showFavouritesSection = computed(() => this.config.favouritesStorageKey?.() != null);
   protected readonly showRecentSearchesSection = computed(() => this.config.recentSearchesStorageKey?.() != null);
@@ -40,21 +41,22 @@ export class CmdkSettingsPanelComponent {
       this.labelInput()?.nativeElement.focus();
     });
 
-    // Any favourite mutation (remove / moveUp / moveDown / add) can destroy whichever element
-    // currently holds focus (a remove button whose row disappears, or the add-row's Label input
-    // once the 9-cap is reached). When the browser detaches a focused node, it reverts
-    // `document.activeElement` to `document.body` — from which neither this panel's nor the
-    // parent palette's (keydown) handler can ever receive another keystroke.
+    // Any favourite mutation (remove / moveUp / moveDown / add), or clicking "Clear recent
+    // searches" (which removes that button once the section swaps to a confirmation message),
+    // can destroy whichever element currently holds focus. When the browser detaches a focused
+    // node, it reverts `document.activeElement` to `document.body` — from which neither this
+    // panel's nor the parent palette's (keydown) handler can ever receive another keystroke.
     // This must be `afterRenderEffect` rather than a plain `effect()`: a plain effect is flushed
-    // as soon as the `favourites` signal changes, which happens *before* the template's own
-    // structural update (the row/add-row removal) has actually been applied to the DOM — so
-    // checking `document.activeElement` there would still see the about-to-be-removed element
-    // and wrongly conclude focus is fine. `afterRenderEffect` runs after the DOM has actually
-    // been patched, so if focus was kicked out to `document.body` by that removal, this
-    // reliably observes it and falls back to focusing the panel root (a valid, always-present
-    // keyboard target) instead of leaving keyboard interaction permanently dead.
+    // as soon as the signal changes, which happens *before* the template's own structural update
+    // (the row/add-row/button removal) has actually been applied to the DOM — so checking
+    // `document.activeElement` there would still see the about-to-be-removed element and wrongly
+    // conclude focus is fine. `afterRenderEffect` runs after the DOM has actually been patched,
+    // so if focus was kicked out to `document.body` by that removal, this reliably observes it
+    // and falls back to focusing the panel root (a valid, always-present keyboard target) instead
+    // of leaving keyboard interaction permanently dead.
     afterRenderEffect(() => {
       this.favouritesService.favourites();
+      this.justClearedRecentSearches();
       this.refocusPanelIfFocusWasLost();
     });
   }
@@ -71,6 +73,7 @@ export class CmdkSettingsPanelComponent {
 
   protected clearRecentSearches(): void {
     this.recentSearches.clear();
+    this.justClearedRecentSearches.set(true);
   }
 
   /**
