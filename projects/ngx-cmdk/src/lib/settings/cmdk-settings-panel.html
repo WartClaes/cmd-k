@@ -1,4 +1,4 @@
-<div class="cmdk-settings" (keydown)="onKeydown($event)">
+<div #settingsRoot class="cmdk-settings" tabindex="-1" (keydown)="onKeydown($event)">
   @if (showFavouritesSection()) {
     <div class="cmdk-settings-section">
       <div class="cmdk-settings-section-label">Favourites</div>

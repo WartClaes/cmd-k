@@ -197,6 +197,68 @@ describe('CmdkSettingsPanelComponent', () => {
     expect(closeSpy).not.toHaveBeenCalled();
   });
 
+  it('remains keyboard-reachable after removing a favourite below the 9-cap (focus is not stranded on document.body)', () => {
+    setup({ favouritesStorageKey: () => 'favs' });
+    favouritesService.add('First', '/first');
+    favouritesService.add('Second', '/second');
+    fixture.detectChanges();
+
+    const closeSpy = vi.fn();
+    fixture.componentInstance.close.subscribe(closeSpy);
+
+    const removeButton: HTMLButtonElement = fixture.nativeElement.querySelector('.cmdk-settings-remove-button');
+    removeButton.focus();
+    expect(document.activeElement).toBe(removeButton);
+
+    removeButton.click();
+    fixture.detectChanges();
+
+    const root: HTMLElement = fixture.nativeElement.querySelector('.cmdk-settings');
+    // The clicked remove button's row (and the button itself) is now destroyed. Assert focus
+    // landed somewhere *inside the panel root* — not merely "somewhere" — proving it wasn't
+    // stranded on document.body.
+    expect(document.activeElement).not.toBe(document.body);
+    expect(root.contains(document.activeElement)).toBe(true);
+
+    (document.activeElement as HTMLElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it('remains keyboard-reachable after adding the 9th favourite destroys the add-row (and its focused Label input)', () => {
+    setup({ favouritesStorageKey: () => 'favs' });
+    const closeSpy = vi.fn();
+    fixture.componentInstance.close.subscribe(closeSpy);
+
+    for (let i = 0; i < 8; i++) {
+      favouritesService.add(`Item ${i}`, `/item-${i}`);
+    }
+    fixture.detectChanges();
+
+    const [labelInput, pathInput] = fixture.nativeElement.querySelectorAll('.cmdk-settings-add-row .cmdk-settings-input');
+    labelInput.value = 'Ninth';
+    labelInput.dispatchEvent(new Event('input'));
+    pathInput.value = '/ninth';
+    pathInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.cmdk-settings-add-button').click();
+    fixture.detectChanges();
+
+    expect(favouritesService.favourites()).toHaveLength(9);
+    expect(fixture.nativeElement.querySelector('.cmdk-settings-add-row')).toBeNull();
+
+    const root: HTMLElement = fixture.nativeElement.querySelector('.cmdk-settings');
+    expect(document.activeElement).not.toBe(document.body);
+    expect(root.contains(document.activeElement)).toBe(true);
+
+    (document.activeElement as HTMLElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
   it('a keydown inside the panel does not bubble to ancestors outside it', () => {
     setup({ favouritesStorageKey: () => 'favs' });
     const outerHandler = vi.fn();

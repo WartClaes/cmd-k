@@ -1,4 +1,14 @@
-import { Component, ElementRef, computed, effect, inject, output, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  afterRenderEffect,
+  computed,
+  effect,
+  inject,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { CMDK_CONFIG } from '../config/cmdk-config';
 import { FavouritesService } from '../favourites/favourites';
 import { RecentSearchesService } from '../search/recent-searches';
@@ -17,6 +27,7 @@ export class CmdkSettingsPanelComponent {
   readonly close = output<void>();
 
   protected readonly labelInput = viewChild<ElementRef<HTMLInputElement>>('labelInput');
+  protected readonly settingsRoot = viewChild<ElementRef<HTMLElement>>('settingsRoot');
   protected readonly newLabel = signal('');
   protected readonly newPath = signal('');
 
@@ -27,6 +38,24 @@ export class CmdkSettingsPanelComponent {
   constructor() {
     effect(() => {
       this.labelInput()?.nativeElement.focus();
+    });
+
+    // Any favourite mutation (remove / moveUp / moveDown / add) can destroy whichever element
+    // currently holds focus (a remove button whose row disappears, or the add-row's Label input
+    // once the 9-cap is reached). When the browser detaches a focused node, it reverts
+    // `document.activeElement` to `document.body` — from which neither this panel's nor the
+    // parent palette's (keydown) handler can ever receive another keystroke.
+    // This must be `afterRenderEffect` rather than a plain `effect()`: a plain effect is flushed
+    // as soon as the `favourites` signal changes, which happens *before* the template's own
+    // structural update (the row/add-row removal) has actually been applied to the DOM — so
+    // checking `document.activeElement` there would still see the about-to-be-removed element
+    // and wrongly conclude focus is fine. `afterRenderEffect` runs after the DOM has actually
+    // been patched, so if focus was kicked out to `document.body` by that removal, this
+    // reliably observes it and falls back to focusing the panel root (a valid, always-present
+    // keyboard target) instead of leaving keyboard interaction permanently dead.
+    afterRenderEffect(() => {
+      this.favouritesService.favourites();
+      this.refocusPanelIfFocusWasLost();
     });
   }
 
@@ -42,6 +71,21 @@ export class CmdkSettingsPanelComponent {
 
   protected clearRecentSearches(): void {
     this.recentSearches.clear();
+  }
+
+  /**
+   * If the currently focused element was just removed from the DOM (browser reverts focus to
+   * `document.body` in that case), fall back to focusing the panel root so Escape/"," keep
+   * working.
+   */
+  private refocusPanelIfFocusWasLost(): void {
+    const root = this.settingsRoot()?.nativeElement;
+    if (!root) {
+      return;
+    }
+    if (!root.contains(document.activeElement)) {
+      root.focus();
+    }
   }
 
   protected onKeydown(event: KeyboardEvent): void {
