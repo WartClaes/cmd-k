@@ -947,6 +947,35 @@ describe('CmdkPaletteComponent', () => {
       expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).toBeNull();
     });
 
+    it('Settings keydowns do not leak into the palette\'s own list-mode Arrow/Enter handling when mounted inside the real palette', () => {
+      const execute = vi.fn();
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      registry.register({ id: 'a', label: 'Some Command', execute, group: 'Actions' });
+      pressOpenShortcut();
+
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).not.toBeNull();
+
+      // Dispatch ArrowDown/Enter targeted at the Settings panel itself (the Label input, if
+      // present, or the panel root) — these must be swallowed by the settings panel's own
+      // (keydown) handler (which calls stopPropagation()) rather than bubbling up to the
+      // palette's onKeydown(), which would otherwise move selectedIndex / execute the stale
+      // selected command via Arrow/Enter.
+      const settingsTarget: HTMLElement =
+        fixture.nativeElement.querySelector('input[placeholder="Label"]') ??
+        fixture.nativeElement.querySelector('.cmdk-settings');
+      settingsTarget.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      settingsTarget.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.cmdk-overlay')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).not.toBeNull();
+      expect(execute).not.toHaveBeenCalled();
+    });
+
     it('renders a Favourites section below Commands in the browse view, with mod+N shortcut hints', () => {
       reconfigure({ favouritesStorageKey: () => 'favs' });
       favouritesService.add('Production orders', '/production-orders');
@@ -1023,6 +1052,26 @@ describe('CmdkPaletteComponent', () => {
         .dispatchEvent(new KeyboardEvent('keydown', { key: '1', code: 'Digit1', metaKey: true, bubbles: true }));
 
       expect(navigate).toHaveBeenCalledWith('/production-orders');
+    });
+
+    it('mod+1 follows reordering: after moveUp(), the shortcut hits the favourite now in first position', () => {
+      const navigate = vi.fn();
+      reconfigure({ favouritesStorageKey: () => 'favs', navigate });
+      favouritesService.add('First', '/first');
+      favouritesService.add('Second', '/second');
+      const secondId = favouritesService.favourites()[1].id;
+
+      // Move "Second" up to first position. If favouriteShortcuts() were wrongly cached/frozen
+      // at add-time (a fixed favourite-to-shortcut assignment) instead of derived from the
+      // favourite's current position, mod+1 would still hit "First" here.
+      favouritesService.moveUp(secondId);
+      pressOpenShortcut();
+
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: '1', code: 'Digit1', metaKey: true, bubbles: true }));
+
+      expect(navigate).toHaveBeenCalledWith('/second');
     });
 
     it('a rejected navigate() reports a favourite-navigate issue and does not crash', async () => {
