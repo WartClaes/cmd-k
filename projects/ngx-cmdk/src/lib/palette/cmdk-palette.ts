@@ -1,5 +1,14 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, DestroyRef, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { resolveLabel, type ResolvedCommand } from '../command/command.model';
 import { CMDK_CONFIG } from '../config/cmdk-config';
 import { CmdkIssueService } from '../issue/cmdk-issue';
@@ -11,7 +20,12 @@ import { RecentSearchesService, type RecentSearchEntry } from '../search/recent-
 import { SearchRegistryService } from '../search/search-registry';
 import type { SearchResult } from '../search/search.model';
 import { CmdkSettingsPanelComponent } from '../settings/cmdk-settings-panel';
-import { formatShortcut, isMacPlatform, matchesShortcut, parseShortcut } from '../shortcut/shortcut';
+import {
+  formatShortcut,
+  isMacPlatform,
+  matchesShortcut,
+  parseShortcut,
+} from '../shortcut/shortcut';
 
 @Component({
   selector: 'ngx-cmdk-palette',
@@ -42,7 +56,9 @@ export class CmdkPaletteComponent {
   protected readonly searchProviders = computed(() => this.searchRegistry.providers());
 
   protected readonly settingsAvailable = computed(
-    () => this.config.favouritesStorageKey?.() != null || this.config.recentSearchesStorageKey?.() != null,
+    () =>
+      this.config.favouritesStorageKey?.() != null ||
+      this.config.recentSearchesStorageKey?.() != null,
   );
 
   protected readonly results = computed(() => fuzzySearch(this.query(), this.registry.commands()));
@@ -57,7 +73,9 @@ export class CmdkPaletteComponent {
     () => this.searchRegistry.hasProviders() && this.query().trim().length > 0,
   );
 
-  protected readonly selectedSearchResult = computed(() => this.searchResults()?.[this.selectedIndex()]);
+  protected readonly selectedSearchResult = computed(
+    () => this.searchResults()?.[this.selectedIndex()],
+  );
 
   protected readonly visibleRecents = computed(() => {
     if (this.isSearchModeActive() || this.scopedProviderKey() !== null) {
@@ -135,7 +153,9 @@ export class CmdkPaletteComponent {
       }
     };
     this.document.addEventListener('keydown', onOpenShortcut);
-    inject(DestroyRef).onDestroy(() => this.document.removeEventListener('keydown', onOpenShortcut));
+    inject(DestroyRef).onDestroy(() =>
+      this.document.removeEventListener('keydown', onOpenShortcut),
+    );
     inject(DestroyRef).onDestroy(() => clearTimeout(this.searchDebounceTimer));
 
     effect(() => {
@@ -147,7 +167,9 @@ export class CmdkPaletteComponent {
     effect(() => {
       const count = this.isSearchModeActive()
         ? (this.searchResults()?.length ?? 0)
-        : this.visibleRecents().length + this.flatMatches().length + this.visibleFavourites().length;
+        : this.visibleRecents().length +
+          this.flatMatches().length +
+          this.visibleFavourites().length;
       if (this.selectedIndex() >= count) {
         this.selectedIndex.set(Math.max(0, count - 1));
       }
@@ -183,7 +205,9 @@ export class CmdkPaletteComponent {
       const colonIndex = value.indexOf(':');
       if (colonIndex !== -1) {
         const candidateKey = value.slice(0, colonIndex).trim().toLowerCase();
-        const matchedProvider = this.searchProviders().find((p) => p.key.toLowerCase() === candidateKey);
+        const matchedProvider = this.searchProviders().find(
+          (p) => p.key.toLowerCase() === candidateKey,
+        );
         if (matchedProvider) {
           this.scopedProviderKey.set(matchedProvider.key);
           value = value.slice(colonIndex + 1).trimStart();
@@ -265,7 +289,9 @@ export class CmdkPaletteComponent {
         break;
       default: {
         const command = this.registry.matchShortcut(event);
-        const favouriteMatch = this.favouriteShortcuts().find(({ parsed }) => matchesShortcut(event, parsed));
+        const favouriteMatch = this.favouriteShortcuts().find(({ parsed }) =>
+          matchesShortcut(event, parsed),
+        );
         if (command) {
           event.preventDefault();
           this.runSelectedCommand(command);
@@ -348,12 +374,22 @@ export class CmdkPaletteComponent {
       if (outcome instanceof Promise) {
         outcome.catch((error) => {
           console.error(`Favourite "${favourite.label}" failed to navigate:`, error);
-          this.issues.report({ source: 'favourite-navigate', label: favourite.label, path: favourite.path, error });
+          this.issues.report({
+            source: 'favourite-navigate',
+            label: favourite.label,
+            path: favourite.path,
+            error,
+          });
         });
       }
     } catch (error) {
       console.error(`Favourite "${favourite.label}" failed to navigate:`, error);
-      this.issues.report({ source: 'favourite-navigate', label: favourite.label, path: favourite.path, error });
+      this.issues.report({
+        source: 'favourite-navigate',
+        label: favourite.label,
+        path: favourite.path,
+        error,
+      });
     }
     this.close();
   }

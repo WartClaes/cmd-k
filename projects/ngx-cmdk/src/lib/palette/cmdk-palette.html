@@ -66,7 +66,10 @@
             @if (visibleRecents().length > 0) {
               <div class="cmdk-group">
                 <div class="cmdk-group-label">Recent searches</div>
-                @for (recent of visibleRecents(); track recent.providerKey + ':' + recent.resultId) {
+                @for (
+                  recent of visibleRecents();
+                  track recent.providerKey + ':' + recent.resultId
+                ) {
                   <div
                     [id]="'cmdk-item-recent-' + recent.providerKey + '-' + recent.resultId"
                     class="cmdk-item"
@@ -77,7 +80,11 @@
                   >
                     <span class="cmdk-item-main">
                       @if (recent.icon) {
-                        <span class="cmdk-item-icon" [class]="recent.icon" aria-hidden="true"></span>
+                        <span
+                          class="cmdk-item-icon"
+                          [class]="recent.icon"
+                          aria-hidden="true"
+                        ></span>
                       }
                       <span class="cmdk-item-label">{{ recent.label }}</span>
                     </span>
@@ -102,7 +109,11 @@
                   >
                     <span class="cmdk-item-main">
                       @if (match.item.icon) {
-                        <span class="cmdk-item-icon" [class]="match.item.icon" aria-hidden="true"></span>
+                        <span
+                          class="cmdk-item-icon"
+                          [class]="match.item.icon"
+                          aria-hidden="true"
+                        ></span>
                       }
                       <span class="cmdk-item-label">{{ resolveLabel(match.item) }}</span>
                     </span>
