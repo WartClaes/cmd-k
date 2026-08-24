@@ -120,6 +120,40 @@
   </article>
 
   <article>
+    <h3>Favourites &amp; Settings</h3>
+    <p>
+      Opt-in and hard-gated like Recent Searches: with no
+      <code>favouritesStorageKey</code> configured, Favourites track
+      nothing and never render. A favourite is a plain
+      <code>{{ '{' }} label, path {{ '}' }}</code> pair the end user types in
+      themselves — not a registered <code>Command</code> — persisted to
+      <code>localStorage</code> and selected via a
+      <code>navigate: (path) =&gt; void | Promise&lt;void&gt;</code>
+      callback you supply, so this library never imports
+      <code>@angular/router</code> itself.
+    </p>
+    <p>
+      Favourites appear below Actions in the same empty-query, unscoped
+      browse view Recent Searches uses. Each favourite's position assigns
+      its shortcut — the 1st is <code>mod+1</code>, up to the 9th at
+      <code>mod+9</code> — which is why the list is capped at 9 and why
+      Command shortcuts can no longer use a digit key at all, with or
+      without a modifier: the digit namespace is reserved for favourites
+      everywhere in this library.
+    </p>
+    <p>
+      Press <code>,</code> with an empty, unscoped query to open
+      Settings — a second view inside the same palette, not a separate
+      component to mount — where favourites are added, removed, and
+      reordered, and where a "Clear recent searches" action lives if
+      <code>recentSearchesStorageKey</code> is configured. Settings
+      itself is reachable only when at least one of those two keys is
+      set; with neither configured, <code>,</code> does nothing.
+    </p>
+    <pre class="doc-code"><code>{{ favouritesSnippet }}</code></pre>
+  </article>
+
+  <article>
     <h3>CmdkIssueService</h3>
     <p>
       Every error this library catches on your behalf — a failing
@@ -141,10 +175,12 @@
       <li>
         Every shortcut needs a real modifier (<code>mod</code>,
         <code>ctrl</code>, <code>alt</code>, or <code>cmd</code>/
-        <code>meta</code>) plus exactly one key — a single letter or digit
-        (a-z or 0-9), e.g. <code>"mod+s"</code> or <code>"mod+shift+p"</code>.
-        A bare key, a shift-only combo, or a key that isn't a single
-        letter/digit is rejected at registration time.
+        <code>meta</code>) plus exactly one key — a single letter (a-z),
+        e.g. <code>"mod+s"</code> or <code>"mod+shift+p"</code>. A bare
+        key, a shift-only combo, a digit key, or a key that isn't a
+        single letter is rejected at registration time — digits are
+        reserved for favourite shortcuts (<code>mod+1</code> through
+        <code>mod+9</code>).
       </li>
       <li>
         A command's shortcut only fires while the palette is open — press

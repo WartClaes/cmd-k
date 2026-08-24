@@ -70,11 +70,29 @@ class RecentSearchesService {
   clear(): void;                                            // e.g. call this on logout
 }`;
 
+  protected readonly favouritesSnippet = `function provideCmdk(config?: {
+  shortcut?: string;
+  searchTimeoutMs?: number;
+  recentSearchesStorageKey?: () => string | null;
+  favouritesStorageKey?: () => string | null;   // unset = feature is fully off
+  navigate?: (path: string) => void | Promise<void>;
+}): EnvironmentProviders;
+
+class FavouritesService {
+  readonly favourites: Signal<readonly { id: string; label: string; path: string }[]>; // capped at 9
+  add(label: string, path: string): void;
+  remove(id: string): void;
+  moveUp(id: string): void;
+  moveDown(id: string): void;
+  clear(): void;
+}`;
+
   protected readonly cmdkIssueSnippet = `type CmdkIssue =
   | { source: 'command'; commandId: string; error: unknown }
   | { source: 'search-provider'; key: string; query: string; reason: 'timeout' | 'error'; error?: unknown }
   | { source: 'search-result'; label: string; error: unknown }
-  | { source: 'recent-resolve'; providerKey: string; resultId: string; error?: unknown };
+  | { source: 'recent-resolve'; providerKey: string; resultId: string; error?: unknown }
+  | { source: 'favourite-navigate'; label: string; path: string; error: unknown };
 
 class CmdkIssueService {
   onIssue(callback: (issue: CmdkIssue) => void): () => void;
