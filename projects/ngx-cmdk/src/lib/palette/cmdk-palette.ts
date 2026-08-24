@@ -289,15 +289,17 @@ export class CmdkPaletteComponent {
         break;
       default: {
         const command = this.registry.matchShortcut(event);
-        const favouriteMatch = this.favouriteShortcuts().find(({ parsed }) =>
-          matchesShortcut(event, parsed),
-        );
         if (command) {
           event.preventDefault();
           this.runSelectedCommand(command);
-        } else if (favouriteMatch) {
-          event.preventDefault();
-          this.runFavourite(favouriteMatch.favourite);
+        } else {
+          const favouriteMatch = this.favouriteShortcuts().find(({ parsed }) =>
+            matchesShortcut(event, parsed),
+          );
+          if (favouriteMatch) {
+            event.preventDefault();
+            this.runFavourite(favouriteMatch.favourite);
+          }
         }
       }
     }
