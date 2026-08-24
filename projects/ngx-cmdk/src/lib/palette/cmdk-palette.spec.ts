@@ -656,6 +656,34 @@ describe('CmdkPaletteComponent', () => {
     }
   });
 
+  describe('footer', () => {
+    it('shows a footer with Navigate/Select/Close hints', () => {
+      pressOpenShortcut();
+      const footer = fixture.nativeElement.querySelector('.cmdk-footer');
+      expect(footer).not.toBeNull();
+      expect(footer.textContent).toContain('Navigate');
+      expect(footer.textContent).toContain('Select');
+      expect(footer.textContent).toContain('Close');
+    });
+
+    it('does not show a Settings hint in the footer when Settings is unavailable', () => {
+      pressOpenShortcut();
+      expect(fixture.nativeElement.querySelector('.cmdk-footer').textContent).not.toContain(
+        'Settings',
+      );
+    });
+
+    it('still shows the footer while typing a query', () => {
+      registry.register({ id: 'a', label: 'Show Alert', execute: () => {} });
+      pressOpenShortcut();
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+      input.value = 'alert';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.cmdk-footer')).not.toBeNull();
+    });
+  });
+
   describe('recent searches', () => {
     let searchRegistry: SearchRegistryService;
     let recentSearches: RecentSearchesService;
@@ -911,6 +939,36 @@ describe('CmdkPaletteComponent', () => {
       input.dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).toBeNull();
+    });
+
+    it('shows a Settings hint in the footer when settings is available, unscoped, and query is empty', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      pressOpenShortcut();
+      expect(fixture.nativeElement.querySelector('.cmdk-footer').textContent).toContain(
+        'Settings',
+      );
+    });
+
+    it('hides the footer Settings hint while scoped to a provider, even with an empty query', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      const searchRegistry = TestBed.inject(SearchRegistryService);
+      searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+      pressOpenShortcut();
+      fixture.nativeElement.querySelector('.cmdk-chip').click();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.cmdk-footer').textContent).not.toContain(
+        'Settings',
+      );
+    });
+
+    it('does not render the general footer while the Settings view itself is open', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      pressOpenShortcut();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.cmdk-footer')).toBeNull();
     });
 
     it('closing Settings returns to the list view without closing the palette', () => {

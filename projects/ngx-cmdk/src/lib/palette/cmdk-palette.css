@@ -136,3 +136,26 @@
   font-size: 12px;
   color: var(--cmdk-muted, #888);
 }
+
+.cmdk-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--cmdk-border, rgba(0, 0, 0, 0.1));
+  font-size: 12px;
+  color: var(--cmdk-muted, #888);
+}
+
+.cmdk-footer-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cmdk-footer-key {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--cmdk-border, rgba(0, 0, 0, 0.1));
+  font-size: 11px;
+}

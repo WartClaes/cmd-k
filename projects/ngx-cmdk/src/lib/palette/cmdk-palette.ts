@@ -61,6 +61,10 @@ export class CmdkPaletteComponent {
       this.config.recentSearchesStorageKey?.() != null,
   );
 
+  protected readonly canOpenSettings = computed(
+    () => this.settingsAvailable() && this.query() === '' && this.scopedProviderKey() === null,
+  );
+
   protected readonly results = computed(() => fuzzySearch(this.query(), this.registry.commands()));
   protected readonly groups = computed(() => groupMatches(this.results()));
   protected readonly flatMatches = computed(() => this.groups().flatMap((g) => g.matches));
@@ -275,7 +279,7 @@ export class CmdkPaletteComponent {
         }
         break;
       case ',':
-        if (this.settingsAvailable() && this.query() === '' && this.scopedProviderKey() === null) {
+        if (this.canOpenSettings()) {
           event.preventDefault();
           this.settingsOpen.set(true);
         }
