@@ -192,11 +192,15 @@ hard-gate above.
 
 ## Selecting a recent entry
 
-Three ways picking a recent can fail, all handled identically: the
-provider named by `providerKey` is no longer registered, it has no
-`resolve`, or `resolve(resultId)` rejects or returns `null`.
+A recent can only be selected (clicked, or reached via Enter) if it's
+currently visible — and visibility already requires its provider to be
+registered (see "Visibility filtering: hide vs. delete" below). So by the
+time a selection actually happens, "provider not registered" can no longer
+occur; the two live ways picking a recent can fail, both handled
+identically, are: the provider is registered but has no `resolve`, or
+`resolve(resultId)` rejects or returns `null`.
 
-- On any of those: `console.error` + report through `CmdkIssueService` as a
+- On either of those: `console.error` + report through `CmdkIssueService` as a
   new `CmdkIssue` variant — `{ source: 'recent-resolve', providerKey,
   resultId, error? }` — remove that entry from the underlying `recent()`
   data (the record is confirmed gone), and no-op. The palette stays open;
