@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CmdkPaletteComponent } from './cmdk-palette';
 import { CommandRegistryService } from '../command/command-registry';
 import { provideCmdk } from '../config/cmdk-config';
+import { FavouritesService } from '../favourites/favourites';
 import { CmdkIssueService } from '../issue/cmdk-issue';
 import { RecentSearchesService } from '../search/recent-searches';
 import { SearchRegistryService } from '../search/search-registry';
@@ -855,6 +856,232 @@ describe('CmdkPaletteComponent', () => {
       expect(selected.textContent).toBe('Only Command');
 
       unregisterCommand();
+    });
+  });
+
+  describe('favourites and settings', () => {
+    let favouritesService: FavouritesService;
+
+    function reconfigure(config: Parameters<typeof provideCmdk>[0]): void {
+      fixture.nativeElement.remove();
+      TestBed.resetTestingModule();
+      Object.defineProperty(window.navigator, 'platform', { value: 'MacIntel', configurable: true });
+      TestBed.configureTestingModule({
+        imports: [CmdkPaletteComponent],
+        providers: [provideCmdk({ shortcut: 'mod+k', ...config })],
+      });
+      fixture = TestBed.createComponent(CmdkPaletteComponent);
+      document.body.appendChild(fixture.nativeElement);
+      registry = TestBed.inject(CommandRegistryService);
+      favouritesService = TestBed.inject(FavouritesService);
+      fixture.detectChanges();
+    }
+
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    it('"," does nothing when neither favouritesStorageKey nor recentSearchesStorageKey is configured', () => {
+      reconfigure({});
+      pressOpenShortcut();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).toBeNull();
+    });
+
+    it('"," opens Settings when the query is empty, unscoped, and a storage key is configured', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      pressOpenShortcut();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).not.toBeNull();
+    });
+
+    it('"," types normally into the search query instead of opening Settings', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      pressOpenShortcut();
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+      input.value = 'a';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).toBeNull();
+    });
+
+    it('closing Settings returns to the list view without closing the palette', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      pressOpenShortcut();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
+      fixture.detectChanges();
+
+      fixture.nativeElement
+        .querySelector('.cmdk-settings')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.cmdk-overlay')).not.toBeNull();
+    });
+
+    it('reopening the palette always starts in the list view, even if Settings was open when it last closed', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      pressOpenShortcut();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
+      fixture.detectChanges();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+
+      pressOpenShortcut();
+
+      expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).toBeNull();
+    });
+
+    it('renders a Favourites section below Commands in the browse view, with mod+N shortcut hints', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      favouritesService.add('Production orders', '/production-orders');
+      registry.register({ id: 'a', label: 'Some Command', execute: () => {}, group: 'Actions' });
+      pressOpenShortcut();
+
+      const groupLabels = Array.from(
+        fixture.nativeElement.querySelectorAll('.cmdk-group-label') as NodeListOf<Element>,
+      ).map((el) => el.textContent);
+      expect(groupLabels).toEqual(['Actions', 'Favourites']);
+      expect(fixture.nativeElement.textContent).toContain('⌘1');
+    });
+
+    it('does not render a Favourites section while scoped, even with an empty query', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      const searchRegistry = TestBed.inject(SearchRegistryService);
+      searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+      favouritesService.add('Production orders', '/production-orders');
+      pressOpenShortcut();
+      fixture.nativeElement.querySelector('.cmdk-chip').click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).not.toContain('Favourites');
+    });
+
+    it('selecting a favourite by Enter calls navigate() with its path and closes the palette', () => {
+      const navigate = vi.fn();
+      reconfigure({ favouritesStorageKey: () => 'favs', navigate });
+      favouritesService.add('Production orders', '/production-orders');
+      pressOpenShortcut();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      fixture.detectChanges();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(navigate).toHaveBeenCalledWith('/production-orders');
+      expect(fixture.nativeElement.querySelector('.cmdk-overlay')).toBeNull();
+    });
+
+    it('clicking a favourite calls navigate() with its path', () => {
+      const navigate = vi.fn();
+      reconfigure({ favouritesStorageKey: () => 'favs', navigate });
+      favouritesService.add('Production orders', '/production-orders');
+      pressOpenShortcut();
+
+      fixture.nativeElement.querySelector('[id^="cmdk-item-favourite-"]').click();
+
+      expect(navigate).toHaveBeenCalledWith('/production-orders');
+    });
+
+    it('mod+1 navigates the first favourite regardless of current query/scope state', () => {
+      const navigate = vi.fn();
+      reconfigure({ favouritesStorageKey: () => 'favs', navigate });
+      const searchRegistry = TestBed.inject(SearchRegistryService);
+      searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+      favouritesService.add('Production orders', '/production-orders');
+      pressOpenShortcut();
+      // Scope to a provider AND type a query — this collapses visibleFavourites() to [],
+      // which is exactly the state that would break a favouriteShortcuts() implementation
+      // wrongly derived from visibleFavourites() instead of the raw, always-current list.
+      fixture.nativeElement.querySelector('.cmdk-chip').click();
+      fixture.detectChanges();
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+      input.value = 'unrelated query';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: '1', code: 'Digit1', metaKey: true, bubbles: true }));
+
+      expect(navigate).toHaveBeenCalledWith('/production-orders');
+    });
+
+    it('a rejected navigate() reports a favourite-navigate issue and does not crash', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const failure = new Error('network down');
+      reconfigure({ favouritesStorageKey: () => 'favs', navigate: () => Promise.reject(failure) });
+      const issues = TestBed.inject(CmdkIssueService);
+      const onIssue = vi.fn();
+      issues.onIssue(onIssue);
+      favouritesService.add('Production orders', '/production-orders');
+      pressOpenShortcut();
+
+      fixture.nativeElement.querySelector('[id^="cmdk-item-favourite-"]').click();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(onIssue).toHaveBeenCalledWith({
+        source: 'favourite-navigate',
+        label: 'Production orders',
+        path: '/production-orders',
+        error: failure,
+      });
+      consoleError.mockRestore();
+    });
+
+    it('selecting a favourite with no navigate configured reports a favourite-navigate issue', () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      const issues = TestBed.inject(CmdkIssueService);
+      const onIssue = vi.fn();
+      issues.onIssue(onIssue);
+      favouritesService.add('Production orders', '/production-orders');
+      pressOpenShortcut();
+
+      fixture.nativeElement.querySelector('[id^="cmdk-item-favourite-"]').click();
+
+      expect(onIssue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          source: 'favourite-navigate',
+          label: 'Production orders',
+          path: '/production-orders',
+        }),
+      );
+      consoleError.mockRestore();
+    });
+
+    it('ArrowDown moves selection from Commands into Favourites', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      registry.register({ id: 'only', label: 'Only Command', execute: () => {} });
+      favouritesService.add('Production orders', '/production-orders');
+      pressOpenShortcut();
+
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      fixture.detectChanges();
+
+      const selected = fixture.nativeElement.querySelector('.cmdk-item--selected .cmdk-item-label');
+      expect(selected.textContent).toBe('Production orders');
     });
   });
 });
