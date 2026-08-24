@@ -52,11 +52,24 @@ describe('provideCmdk', () => {
     );
   });
 
+  it('throws when given a shortcut with a digit key', () => {
+    expect(() => provideCmdk({ shortcut: 'mod+1' })).toThrow(
+      'Shortcut "mod+1" cannot use a digit key — digits are reserved for favourite shortcuts (mod+1 through mod+9)',
+    );
+  });
+
   it('accepts an optional recentSearchesStorageKey callback and leaves it unset by default', () => {
     const withKey = provideCmdk({ recentSearchesStorageKey: () => 'my-key' });
     const withoutKey = provideCmdk();
     expect(withKey).toBeTruthy();
     expect(withoutKey).toBeTruthy();
+  });
+
+  it('accepts optional favouritesStorageKey and navigate, and leaves them unset by default', () => {
+    const withFavourites = provideCmdk({ favouritesStorageKey: () => 'my-favourites-key', navigate: () => {} });
+    const withoutFavourites = provideCmdk();
+    expect(withFavourites).toBeTruthy();
+    expect(withoutFavourites).toBeTruthy();
   });
 });
 

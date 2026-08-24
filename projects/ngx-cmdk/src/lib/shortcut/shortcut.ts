@@ -92,7 +92,12 @@ export function hasRequiredModifier(shortcut: string): boolean {
 
 export function hasExactlyOneKey(shortcut: string): boolean {
   const keyTokens = tokenize(shortcut).filter((token) => !ALL_MODIFIER_TOKENS.has(token));
-  return keyTokens.length === 1 && /^[a-z0-9]$/.test(keyTokens[0]);
+  return keyTokens.length === 1 && /^[a-z]$/.test(keyTokens[0]);
+}
+
+export function usesDigitKey(shortcut: string): boolean {
+  const keyTokens = tokenize(shortcut).filter((token) => !ALL_MODIFIER_TOKENS.has(token));
+  return keyTokens.length === 1 && /^[0-9]$/.test(keyTokens[0]);
 }
 
 export function formatShortcut(shortcut: string, isMac: boolean): string {

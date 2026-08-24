@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CmdkPaletteComponent } from 'ngx-cmdk';
 import { ApiReference } from './api-reference';
+import { demoNavigateTarget } from './app.config';
 import { DemoActivityLog } from './demo-activity-log';
 import { DemoActions } from './demo-actions';
 import { DemoNav } from './demo-nav';
@@ -29,4 +30,8 @@ export class App {
     execute: () => { this.router.navigate(['/settings']); },
   });
 }`;
+
+  constructor() {
+    demoNavigateTarget.current = (path) => this.log.log(`Navigated to "${path}"`);
+  }
 }
