@@ -70,9 +70,15 @@
   @if (showRecentSearchesSection()) {
     <div class="cmdk-settings-section">
       <div class="cmdk-settings-section-label">Recent searches</div>
-      <button type="button" class="cmdk-settings-clear-button" (click)="clearRecentSearches()">
-        Clear recent searches
-      </button>
+      @if (recentSearches.recent().length > 0) {
+        <button type="button" class="cmdk-settings-clear-button" (click)="clearRecentSearches()">
+          Clear recent searches
+        </button>
+      } @else if (justClearedRecentSearches()) {
+        <p class="cmdk-settings-limit-message">Recent searches cleared.</p>
+      } @else {
+        <p class="cmdk-settings-limit-message">No recent searches found.</p>
+      }
     </div>
   }
   <div class="cmdk-settings-footer">

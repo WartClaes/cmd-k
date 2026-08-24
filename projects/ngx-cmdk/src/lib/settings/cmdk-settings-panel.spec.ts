@@ -155,11 +155,40 @@ describe('CmdkSettingsPanelComponent', () => {
   it('clicking "Clear recent searches" clears RecentSearchesService', () => {
     setup({ recentSearchesStorageKey: () => 'recents' });
     recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+    fixture.detectChanges();
     expect(recentSearches.recent()).toHaveLength(1);
 
     fixture.nativeElement.querySelector('.cmdk-settings-clear-button').click();
 
     expect(recentSearches.recent()).toEqual([]);
+  });
+
+  it('shows "No recent searches found." when there are none, instead of an empty section', () => {
+    setup({ recentSearchesStorageKey: () => 'recents' });
+    expect(fixture.nativeElement.querySelector('.cmdk-settings-clear-button')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('No recent searches found.');
+  });
+
+  it('hides the "No recent searches found." message once there is something to clear', () => {
+    setup({ recentSearchesStorageKey: () => 'recents' });
+    recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('No recent searches found.');
+    expect(fixture.nativeElement.querySelector('.cmdk-settings-clear-button')).not.toBeNull();
+  });
+
+  it('shows a confirmation and hides the button after clicking "Clear recent searches"', () => {
+    setup({ recentSearchesStorageKey: () => 'recents' });
+    recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.cmdk-settings-clear-button').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.cmdk-settings-clear-button')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Recent searches cleared.');
+    expect(fixture.nativeElement.textContent).not.toContain('No recent searches found.');
   });
 
   it('pressing Escape emits close', () => {
@@ -248,6 +277,31 @@ describe('CmdkSettingsPanelComponent', () => {
 
     expect(favouritesService.favourites()).toHaveLength(9);
     expect(fixture.nativeElement.querySelector('.cmdk-settings-add-row')).toBeNull();
+
+    const root: HTMLElement = fixture.nativeElement.querySelector('.cmdk-settings');
+    expect(document.activeElement).not.toBe(document.body);
+    expect(root.contains(document.activeElement)).toBe(true);
+
+    (document.activeElement as HTMLElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it('remains keyboard-reachable after clicking "Clear recent searches" destroys the focused button', () => {
+    setup({ recentSearchesStorageKey: () => 'recents' });
+    recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+    fixture.detectChanges();
+
+    const closeSpy = vi.fn();
+    fixture.componentInstance.close.subscribe(closeSpy);
+
+    const clearButton: HTMLButtonElement = fixture.nativeElement.querySelector('.cmdk-settings-clear-button');
+    clearButton.focus();
+    expect(document.activeElement).toBe(clearButton);
+
+    clearButton.click();
+    fixture.detectChanges();
 
     const root: HTMLElement = fixture.nativeElement.querySelector('.cmdk-settings');
     expect(document.activeElement).not.toBe(document.body);
