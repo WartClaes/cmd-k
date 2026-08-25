@@ -177,6 +177,17 @@ export class CmdkPaletteComponent {
       }
     });
 
+    // Defends against a stale scope token: if the scoped provider unregisters while the palette
+    // is scoped to it, this clears the scope automatically instead of leaving the user stuck in
+    // a scope that can never return results, with no way out but Backspace on an empty query.
+    effect(() => {
+      const key = this.scopedProviderKey();
+      if (key !== null && !this.searchProviders().some((provider) => provider.key === key)) {
+        this.scopedProviderKey.set(null);
+        this.selectedIndex.set(0);
+      }
+    });
+
     effect(() => {
       const count = this.isSearchModeActive()
         ? (this.searchResults()?.length ?? 0)

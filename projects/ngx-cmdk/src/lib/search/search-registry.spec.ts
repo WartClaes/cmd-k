@@ -101,6 +101,21 @@ describe('SearchRegistryService', () => {
     const foreignResult = { label: 'Untracked', execute: () => {} };
     expect(service.providerKeyFor(foreignResult)).toBeUndefined();
   });
+
+  it('reports a search-scope issue when scopeKey matches no registered provider', async () => {
+    const issues = TestBed.inject(CmdkIssueService);
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const onIssue = vi.fn();
+    issues.onIssue(onIssue);
+    service.register(makeProvider({ key: 'a' }));
+
+    const results = await service.search('query', 'nonexistent');
+
+    expect(results).toEqual([]);
+    expect(consoleWarn).toHaveBeenCalled();
+    expect(onIssue).toHaveBeenCalledWith({ source: 'search-scope', scopeKey: 'nonexistent', query: 'query' });
+    consoleWarn.mockRestore();
+  });
 });
 
 describe('SearchRegistryService timeout/error handling', () => {

@@ -63,6 +63,11 @@ export class SearchRegistryService {
   async search(query: string, scopeKey?: string): Promise<SearchResult[]> {
     const all = this.providers();
     const targets = scopeKey ? all.filter((provider) => provider.key === scopeKey) : all;
+    if (scopeKey && targets.length === 0) {
+      console.warn(`Search scope "${scopeKey}" matches no registered provider`);
+      this.issues.report({ source: 'search-scope', scopeKey, query });
+      return [];
+    }
     const resultsPerProvider = await Promise.all(
       targets.map(async (provider) => {
         const results = await searchWithTimeout(provider, query, this.config.searchTimeoutMs, this.issues);

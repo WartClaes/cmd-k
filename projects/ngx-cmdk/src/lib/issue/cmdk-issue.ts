@@ -7,7 +7,8 @@ export type CmdkIssue =
   | { source: 'recent-resolve'; providerKey: string; resultId: string; error?: unknown }
   | { source: 'favourite-navigate'; label: string; path: string; error: unknown }
   | { source: 'recent-searches-storage'; key: string; error: unknown }
-  | { source: 'favourites-storage'; key: string; error: unknown };
+  | { source: 'favourites-storage'; key: string; error: unknown }
+  | { source: 'search-scope'; scopeKey: string; query: string };
 
 @Injectable({ providedIn: 'root' })
 export class CmdkIssueService {
