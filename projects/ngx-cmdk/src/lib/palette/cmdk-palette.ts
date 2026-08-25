@@ -68,7 +68,7 @@ export class CmdkPaletteComponent {
   );
 
   protected readonly results = computed(() => fuzzySearch(this.query(), this.registry.commands()));
-  protected readonly groups = computed(() => groupMatches(this.results()));
+  protected readonly groups = computed(() => groupMatches(this.results(), this.labels().ungroupedGroup));
   protected readonly flatMatches = computed(() => this.groups().flatMap((g) => g.matches));
   protected readonly resolveLabel = resolveLabel;
   protected readonly formatShortcut = (shortcut: string) => formatShortcut(shortcut, this.isMac);

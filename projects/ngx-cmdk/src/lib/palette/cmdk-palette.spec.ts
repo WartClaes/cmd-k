@@ -751,6 +751,16 @@ describe('CmdkPaletteComponent', () => {
       expect(footer.textContent).toContain('Echap');
       expect(footer.textContent).not.toContain('Esc');
     });
+
+    it('renders an overridden ungroupedGroup label as the group header for a command with no group set', () => {
+      reconfigure({ labels: () => ({ ungroupedGroup: 'Autre' }) });
+      registry.register({ id: 'no-group', label: 'Ungrouped command', execute: () => {} });
+      pressOpenShortcut();
+
+      const list = fixture.nativeElement.querySelector('.cmdk-list');
+      expect(list.textContent).toContain('Autre');
+      expect(list.textContent).not.toContain('Other');
+    });
   });
 
   describe('recent searches', () => {
