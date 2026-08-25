@@ -3,6 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import type { Command, ResolvedCommand } from './command.model';
 import { CMDK_CONFIG } from '../config/cmdk-config';
 import { CmdkIssueService } from '../issue/cmdk-issue';
+import { generateId } from '../shared/generate-id';
 import {
   hasExactlyOneKey,
   hasRequiredModifier,
@@ -15,17 +16,6 @@ import {
 
 function canonicalShortcutKey(parsed: ParsedShortcut): string {
   return `${parsed.ctrl}|${parsed.meta}|${parsed.alt}|${parsed.shift}|${parsed.key}`;
-}
-
-function generateId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    try {
-      return crypto.randomUUID();
-    } catch {
-      // crypto.randomUUID() is restricted to secure contexts; fall back below.
-    }
-  }
-  return `cmdk-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -44,7 +34,7 @@ export class CommandRegistryService {
   );
 
   register(command: Command): () => void {
-    const id = command.id ?? generateId();
+    const id = command.id ?? generateId('cmdk-');
     if (this.commandsMap().has(id)) {
       throw new Error(`Command with id "${id}" is already registered`);
     }
