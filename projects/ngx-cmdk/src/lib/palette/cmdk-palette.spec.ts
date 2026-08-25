@@ -684,6 +684,31 @@ describe('CmdkPaletteComponent', () => {
     });
   });
 
+  describe('labels', () => {
+    function reconfigure(config: Parameters<typeof provideCmdk>[0]): void {
+      fixture.nativeElement.remove();
+      TestBed.resetTestingModule();
+      Object.defineProperty(window.navigator, 'platform', { value: 'MacIntel', configurable: true });
+      TestBed.configureTestingModule({
+        imports: [CmdkPaletteComponent],
+        providers: [provideCmdk({ shortcut: 'mod+k', ...config })],
+      });
+      fixture = TestBed.createComponent(CmdkPaletteComponent);
+      document.body.appendChild(fixture.nativeElement);
+      registry = TestBed.inject(CommandRegistryService);
+      fixture.detectChanges();
+    }
+
+    it('renders an overridden label in place of its English default', () => {
+      reconfigure({ labels: () => ({ footerNavigate: 'Naviguer' }) });
+      pressOpenShortcut();
+
+      const footer = fixture.nativeElement.querySelector('.cmdk-footer');
+      expect(footer.textContent).toContain('Naviguer');
+      expect(footer.textContent).not.toContain('Navigate');
+    });
+  });
+
   describe('recent searches', () => {
     let searchRegistry: SearchRegistryService;
     let recentSearches: RecentSearchesService;
