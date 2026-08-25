@@ -51,6 +51,23 @@
   padding: 4px 6px;
 }
 
+/*
+ * Overrides the shared rule's `font: inherit`/padding: the up/down glyphs don't need the
+ * ambient body font-size — at that size, two stacked buttons are noticeably taller than a
+ * single input row, so the pair renders visibly off-center against it instead of bracketing
+ * it tightly. A small, tight line-height keeps the pair compact enough to actually center.
+ */
+.cmdk-settings-move-button {
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 5px;
+}
+
+.cmdk-settings-move-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .cmdk-settings-add-button {
   background: var(--cmdk-accent, color-mix(in srgb, var(--cmdk-accent-color, #8b5cf6) 12%, transparent));
   border-radius: 9px;

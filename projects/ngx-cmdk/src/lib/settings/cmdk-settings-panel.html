@@ -2,12 +2,13 @@
   @if (showFavouritesSection()) {
     <div class="cmdk-settings-section">
       <div class="cmdk-settings-section-label">{{ labels().favouritesGroup }}</div>
-      @for (favourite of favouritesService.favourites(); track favourite.id) {
+      @for (favourite of favouritesService.favourites(); track favourite.id; let isFirst = $first; let isLast = $last) {
         <div class="cmdk-settings-row">
           <div class="cmdk-settings-move-buttons">
             <button
               type="button"
               class="cmdk-settings-move-button"
+              [disabled]="isFirst"
               (click)="favouritesService.moveUp(favourite.id)"
               [attr.aria-label]="labels().moveUp"
             >
@@ -16,6 +17,7 @@
             <button
               type="button"
               class="cmdk-settings-move-button"
+              [disabled]="isLast"
               (click)="favouritesService.moveDown(favourite.id)"
               [attr.aria-label]="labels().moveDown"
             >
