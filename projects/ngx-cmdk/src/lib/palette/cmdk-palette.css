@@ -172,6 +172,9 @@
   font-family: 'Space Mono', monospace;
   background: var(--cmdk-key-bg, oklch(0.95 0.008 50));
   color: var(--cmdk-key-fg, oklch(0.45 0.01 50));
+  /* Shares labels().keyEscape with the footer's capitalized key badge; lowercased here purely
+     for this spot's own visual style, independent of whatever casing a host app's override uses. */
+  text-transform: lowercase;
 }
 
 .cmdk-scope-token {

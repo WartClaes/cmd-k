@@ -25,6 +25,7 @@ export interface CmdkLabels {
   recentSearchesCleared: string;       // confirmation message
   noRecentSearchesFound: string;       // empty message
   closeSettings: string;               // "CLOSE SETTINGS"
+  keyEscape: string;                   // keycap legend — input row's inline hint + footer's key badge — "Esc"
 }
 
 export const DEFAULT_CMDK_LABELS: CmdkLabels = {
@@ -51,6 +52,7 @@ export const DEFAULT_CMDK_LABELS: CmdkLabels = {
   recentSearchesCleared: 'Recent searches cleared.',
   noRecentSearchesFound: 'No recent searches found.',
   closeSettings: 'CLOSE SETTINGS',
+  keyEscape: 'Esc',
 };
 
 @Injectable({ providedIn: 'root' })

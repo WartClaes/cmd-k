@@ -113,6 +113,7 @@ class FavouritesService {
   recentSearchesCleared: string;       // "Recent searches cleared."
   noRecentSearchesFound: string;       // "No recent searches found."
   closeSettings: string;               // "CLOSE SETTINGS"
+  keyEscape: string;                   // keycap legend — "Esc"
 }
 
 class CmdkLabelsService {

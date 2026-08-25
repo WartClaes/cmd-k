@@ -740,6 +740,17 @@ describe('CmdkPaletteComponent', () => {
       expect(footer.textContent).toContain('Naviguer');
       expect(footer.textContent).not.toContain('Navigate');
     });
+
+    it('renders an overridden keyEscape label in both the input row and the footer, replacing the English default in both', () => {
+      reconfigure({ labels: () => ({ keyEscape: 'Echap' }) });
+      pressOpenShortcut();
+
+      const escHint = fixture.nativeElement.querySelector('.cmdk-input-esc-hint');
+      const footer = fixture.nativeElement.querySelector('.cmdk-footer');
+      expect(escHint.textContent).toBe('Echap');
+      expect(footer.textContent).toContain('Echap');
+      expect(footer.textContent).not.toContain('Esc');
+    });
   });
 
   describe('recent searches', () => {
