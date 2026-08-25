@@ -326,4 +326,27 @@ describe('CmdkSettingsPanelComponent', () => {
       document.body.removeEventListener('keydown', outerHandler);
     }
   });
+
+  describe('labels', () => {
+    it('renders an overridden label in place of its English default', () => {
+      setup({ favouritesStorageKey: () => 'favs', labels: () => ({ closeSettings: 'FERMER' }) });
+
+      expect(fixture.nativeElement.textContent).toContain('FERMER');
+      expect(fixture.nativeElement.textContent).not.toContain('CLOSE SETTINGS');
+    });
+
+    it('substitutes %max% in an overridden favourites-limit message with the actual cap', () => {
+      setup({
+        favouritesStorageKey: () => 'favs',
+        labels: () => ({ favouritesLimitReached: 'Cap of %max% hit.' }),
+      });
+      for (let i = 0; i < 9; i++) {
+        favouritesService.add(`Item ${i}`, `/item-${i}`);
+      }
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Cap of 9 hit.');
+      expect(fixture.nativeElement.textContent).not.toContain('%max%');
+    });
+  });
 });

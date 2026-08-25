@@ -10,7 +10,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { CMDK_CONFIG } from '../config/cmdk-config';
-import { FavouritesService } from '../favourites/favourites';
+import { CmdkLabelsService } from '../config/cmdk-labels';
+import { FavouritesService, MAX_FAVOURITE_ENTRIES } from '../favourites/favourites';
 import { RecentSearchesService } from '../search/recent-searches';
 
 @Component({
@@ -23,6 +24,8 @@ export class CmdkSettingsPanelComponent {
   private readonly config = inject(CMDK_CONFIG);
   protected readonly favouritesService = inject(FavouritesService);
   protected readonly recentSearches = inject(RecentSearchesService);
+  protected readonly labels = inject(CmdkLabelsService).labels;
+  protected readonly maxFavourites = MAX_FAVOURITE_ENTRIES;
 
   readonly close = output<void>();
 
@@ -35,6 +38,9 @@ export class CmdkSettingsPanelComponent {
   protected readonly showFavouritesSection = computed(() => this.config.favouritesStorageKey?.() != null);
   protected readonly showRecentSearchesSection = computed(() => this.config.recentSearchesStorageKey?.() != null);
   protected readonly canSubmit = computed(() => this.newLabel().trim().length > 0 && this.newPath().trim().length > 0);
+  protected readonly favouritesLimitMessage = computed(() =>
+    this.labels().favouritesLimitReached.replace('%max%', String(MAX_FAVOURITE_ENTRIES)),
+  );
 
   constructor() {
     effect(() => {
