@@ -286,6 +286,25 @@ describe('CmdkSettingsPanelComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('No recent searches found.');
   });
 
+  it('announces the button-to-confirmation swap to screen readers via a stable aria-live region', () => {
+    setup({ recentSearchesStorageKey: () => 'recents' });
+    recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+    fixture.detectChanges();
+
+    const liveRegion: HTMLElement = fixture.nativeElement.querySelector('[aria-live="polite"]');
+    expect(liveRegion).not.toBeNull();
+    expect(liveRegion.contains(fixture.nativeElement.querySelector('.cmdk-settings-clear-button'))).toBe(true);
+
+    fixture.nativeElement.querySelector('.cmdk-settings-clear-button').click();
+    fixture.detectChanges();
+
+    // The same live-region element must still be in the document — not a new one the @if/@else
+    // swap happened to recreate with matching attributes — since only mutations *within* an
+    // already-present live region are what get announced.
+    expect(document.body.contains(liveRegion)).toBe(true);
+    expect(liveRegion.textContent).toContain('Recent searches cleared.');
+  });
+
   it('pressing Escape emits close', () => {
     setup({ favouritesStorageKey: () => 'favs' });
     const closeSpy = vi.fn();

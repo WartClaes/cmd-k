@@ -72,15 +72,24 @@
   @if (showRecentSearchesSection()) {
     <div class="cmdk-settings-section">
       <div class="cmdk-settings-section-label">{{ labels().recentSearchesGroup }}</div>
-      @if (recentSearches.recent().length > 0) {
-        <button type="button" class="cmdk-settings-clear-button" (click)="clearRecentSearches()">
-          {{ labels().clearRecentSearches }}
-        </button>
-      } @else if (justClearedRecentSearches()) {
-        <p class="cmdk-settings-limit-message">{{ labels().recentSearchesCleared }}</p>
-      } @else {
-        <p class="cmdk-settings-limit-message">{{ labels().noRecentSearchesFound }}</p>
-      }
+      <!--
+        aria-live wraps the button/message swap, not just the message itself: the wrapper stays
+        in the DOM across every state change (only its content is replaced), which is what makes
+        a screen reader announce the transition at all — an aria-live attribute placed on an
+        element that itself gets destroyed and recreated by the @if/@else swap is unreliable,
+        since most screen readers only announce mutations *within* an already-present live region.
+      -->
+      <div aria-live="polite">
+        @if (recentSearches.recent().length > 0) {
+          <button type="button" class="cmdk-settings-clear-button" (click)="clearRecentSearches()">
+            {{ labels().clearRecentSearches }}
+          </button>
+        } @else if (justClearedRecentSearches()) {
+          <p class="cmdk-settings-limit-message">{{ labels().recentSearchesCleared }}</p>
+        } @else {
+          <p class="cmdk-settings-limit-message">{{ labels().noRecentSearchesFound }}</p>
+        }
+      </div>
     </div>
   }
   <div class="cmdk-settings-footer">
