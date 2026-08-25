@@ -139,6 +139,14 @@ describe('SearchRegistryService timeout/error handling', () => {
     consoleWarn.mockRestore();
   });
 
+  it('clears its timeout timer once a provider resolves, instead of leaving it pending for the full timeout duration', async () => {
+    service.register(makeProvider({ key: 'fast', search: async () => [] }));
+
+    await service.search('query');
+
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it('contributes no results and reports an error issue for a provider that rejects', async () => {
     const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const onIssue = vi.fn();
