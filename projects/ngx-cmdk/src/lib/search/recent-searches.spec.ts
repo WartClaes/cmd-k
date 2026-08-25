@@ -241,4 +241,34 @@ describe('RecentSearchesService', () => {
       Object.defineProperty(window, 'localStorage', descriptor);
     }
   });
+
+  it('degrades to no persisted storage (without throwing) when localStorage.getItem/removeItem throw, even though the localStorage reference itself was obtained successfully', () => {
+    const originalGetItem = Storage.prototype.getItem;
+    const originalRemoveItem = Storage.prototype.removeItem;
+    Storage.prototype.getItem = () => {
+      throw new DOMException('blocked', 'SecurityError');
+    };
+    Storage.prototype.removeItem = () => {
+      throw new DOMException('blocked', 'SecurityError');
+    };
+
+    try {
+      let service!: RecentSearchesService;
+      expect(() => {
+        service = setup(() => 'recents');
+      }).not.toThrow();
+      expect(service.recent()).toEqual([]);
+
+      expect(() => service.record('fruits', makeResult({ resultId: 'apple' }))).not.toThrow();
+      expect(service.recent()).toEqual([
+        expect.objectContaining({ providerKey: 'fruits', resultId: 'apple' }),
+      ]);
+
+      expect(() => service.clear()).not.toThrow();
+      expect(service.recent()).toEqual([]);
+    } finally {
+      Storage.prototype.getItem = originalGetItem;
+      Storage.prototype.removeItem = originalRemoveItem;
+    }
+  });
 });

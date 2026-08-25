@@ -81,7 +81,7 @@ export class RecentSearchesService {
     this.entriesSignal.set([]);
     const key = this.currentKey();
     if (key) {
-      this.localStorageRef?.removeItem(key);
+      this.removeFromStorage(key);
     }
   }
 
@@ -99,7 +99,13 @@ export class RecentSearchesService {
   }
 
   private readFromStorage(key: string): RecentSearchEntry[] {
-    const raw = this.localStorageRef?.getItem(key);
+    let raw: string | null | undefined;
+    try {
+      raw = this.localStorageRef?.getItem(key);
+    } catch (error) {
+      console.warn(`Failed to read recent searches from localStorage key "${key}":`, error);
+      return [];
+    }
     if (!raw) {
       return [];
     }
@@ -130,6 +136,14 @@ export class RecentSearchesService {
       this.localStorageRef?.setItem(key, JSON.stringify(entries));
     } catch (error) {
       console.warn(`Failed to write recent searches to localStorage key "${key}":`, error);
+    }
+  }
+
+  private removeFromStorage(key: string): void {
+    try {
+      this.localStorageRef?.removeItem(key);
+    } catch (error) {
+      console.warn(`Failed to clear recent searches from localStorage key "${key}":`, error);
     }
   }
 }

@@ -112,7 +112,7 @@ export class FavouritesService {
     this.entriesSignal.set([]);
     const key = this.currentKey();
     if (key) {
-      this.localStorageRef?.removeItem(key);
+      this.removeFromStorage(key);
     }
   }
 
@@ -130,7 +130,13 @@ export class FavouritesService {
   }
 
   private readFromStorage(key: string): FavouriteEntry[] {
-    const raw = this.localStorageRef?.getItem(key);
+    let raw: string | null | undefined;
+    try {
+      raw = this.localStorageRef?.getItem(key);
+    } catch (error) {
+      console.warn(`Failed to read favourites from localStorage key "${key}":`, error);
+      return [];
+    }
     if (!raw) {
       return [];
     }
@@ -160,6 +166,14 @@ export class FavouritesService {
       this.localStorageRef?.setItem(key, JSON.stringify(entries));
     } catch (error) {
       console.warn(`Failed to write favourites to localStorage key "${key}":`, error);
+    }
+  }
+
+  private removeFromStorage(key: string): void {
+    try {
+      this.localStorageRef?.removeItem(key);
+    } catch (error) {
+      console.warn(`Failed to clear favourites from localStorage key "${key}":`, error);
     }
   }
 }
