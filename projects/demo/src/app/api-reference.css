@@ -1,9 +1,42 @@
+.doc-section {
+  scroll-margin-top: 80px;
+}
+
 .doc-section article {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 28px;
 }
 
 .doc-section h3 {
   margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.doc-section article p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--demo-text-muted);
+}
+
+.doc-section article ul {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.doc-section article li {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--demo-text-muted);
+}
+
+.doc-section code {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9em;
 }

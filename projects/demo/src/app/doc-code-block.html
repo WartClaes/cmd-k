@@ -1,0 +1,11 @@
+<div class="doc-code-block">
+  @if (label()) {
+    <div class="doc-code-block-header">
+      <span class="doc-code-block-label">{{ label() }}</span>
+      <button type="button" class="doc-code-block-copy" (click)="copy()">{{ copied() ? 'copied' : 'copy' }}</button>
+    </div>
+  } @else {
+    <button type="button" class="doc-code-block-copy doc-code-block-copy--floating" (click)="copy()">{{ copied() ? 'copied' : 'copy' }}</button>
+  }
+  <pre class="doc-code-block-body"><code [innerHTML]="highlightedHtml()"></code></pre>
+</div>

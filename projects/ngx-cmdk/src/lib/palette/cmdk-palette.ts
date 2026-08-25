@@ -72,6 +72,8 @@ export class CmdkPaletteComponent {
   protected readonly flatMatches = computed(() => this.groups().flatMap((g) => g.matches));
   protected readonly resolveLabel = resolveLabel;
   protected readonly formatShortcut = (shortcut: string) => formatShortcut(shortcut, this.isMac);
+  // Pure presentational helper for the row "initial" avatar shown when a row has no consumer-supplied icon.
+  protected readonly firstInitial = (label: string) => label.charAt(0).toUpperCase();
 
   protected readonly searchResults = signal<SearchResult[] | null>(null);
 
