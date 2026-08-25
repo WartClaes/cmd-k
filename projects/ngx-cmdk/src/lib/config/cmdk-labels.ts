@@ -8,6 +8,7 @@ export interface CmdkLabels {
   noResults: string;                   // "No results"
   searching: string;                   // "Searching…"
   noMatchingCommands: string;          // "No matching commands"
+  ungroupedGroup: string;              // group header for a Command with no `group` set — "Other"
   recentSearchesGroup: string;         // "Recent searches" (palette group + settings section)
   favouritesGroup: string;             // "Favourites" (palette group + settings section)
   footerNavigate: string;              // "Navigate"
@@ -25,6 +26,7 @@ export interface CmdkLabels {
   recentSearchesCleared: string;       // confirmation message
   noRecentSearchesFound: string;       // empty message
   closeSettings: string;               // "CLOSE SETTINGS"
+  keyEscape: string;                   // keycap legend — input row's inline hint + footer's key badge — "Esc"
 }
 
 export const DEFAULT_CMDK_LABELS: CmdkLabels = {
@@ -34,6 +36,7 @@ export const DEFAULT_CMDK_LABELS: CmdkLabels = {
   noResults: 'No results',
   searching: 'Searching…',
   noMatchingCommands: 'No matching commands',
+  ungroupedGroup: 'Other',
   recentSearchesGroup: 'Recent searches',
   favouritesGroup: 'Favourites',
   footerNavigate: 'Navigate',
@@ -51,6 +54,7 @@ export const DEFAULT_CMDK_LABELS: CmdkLabels = {
   recentSearchesCleared: 'Recent searches cleared.',
   noRecentSearchesFound: 'No recent searches found.',
   closeSettings: 'CLOSE SETTINGS',
+  keyEscape: 'Esc',
 };
 
 @Injectable({ providedIn: 'root' })

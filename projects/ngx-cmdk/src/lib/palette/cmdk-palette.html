@@ -30,7 +30,7 @@
             [value]="query()"
             (input)="onQueryChange($any($event.target).value)"
           />
-          <span class="cmdk-input-esc-hint">esc</span>
+          <span class="cmdk-input-esc-hint">{{ labels().keyEscape }}</span>
         </div>
         @if (scopedProviderKey() === null && searchProviders().length > 0) {
           <div class="cmdk-chip-row">
@@ -183,7 +183,7 @@
         <div class="cmdk-footer">
           <span class="cmdk-footer-hint"><span class="cmdk-footer-key">↑↓</span> {{ labels().footerNavigate }}</span>
           <span class="cmdk-footer-hint"><span class="cmdk-footer-key">↵</span> {{ labels().footerSelect }}</span>
-          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">Esc</span> {{ labels().footerClose }}</span>
+          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">{{ labels().keyEscape }}</span> {{ labels().footerClose }}</span>
           @if (canOpenSettings()) {
             <span class="cmdk-footer-hint"><span class="cmdk-footer-key">,</span> {{ labels().footerSettings }}</span>
           }

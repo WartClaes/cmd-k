@@ -47,11 +47,17 @@ export class CmdkSettingsPanelComponent {
       this.labelInput()?.nativeElement.focus();
     });
 
-    // Any favourite mutation (remove / moveUp / moveDown / add), or clicking "Clear recent
-    // searches" (which removes that button once the section swaps to a confirmation message),
-    // can destroy whichever element currently holds focus. When the browser detaches a focused
-    // node, it reverts `document.activeElement` to `document.body` — from which neither this
-    // panel's nor the parent palette's (keydown) handler can ever receive another keystroke.
+    // Any favourite mutation (remove / moveUp / moveDown / add), or any recent-searches mutation
+    // (clicking "Clear recent searches" removes that button once the section swaps to a
+    // confirmation message; the section can also disappear entirely if a live
+    // recentSearchesStorageKey callback turns off, or if something outside this component calls
+    // RecentSearchesService.clear()/removeEntry() while the button is focused), can destroy
+    // whichever element currently holds focus. When the browser detaches a focused node, it
+    // reverts `document.activeElement` to `document.body` — from which neither this panel's nor
+    // the parent palette's (keydown) handler can ever receive another keystroke. This is why the
+    // effect below tracks the services' own `favourites()`/`recent()` signals directly, not just
+    // a local flag this component happens to set on its own button clicks — a signal read here
+    // reacts to a mutation no matter what triggered it.
     // This must be `afterRenderEffect` rather than a plain `effect()`: a plain effect is flushed
     // as soon as the signal changes, which happens *before* the template's own structural update
     // (the row/add-row/button removal) has actually been applied to the DOM — so checking
@@ -62,6 +68,7 @@ export class CmdkSettingsPanelComponent {
     // of leaving keyboard interaction permanently dead.
     afterRenderEffect(() => {
       this.favouritesService.favourites();
+      this.recentSearches.recent();
       this.justClearedRecentSearches();
       this.refocusPanelIfFocusWasLost();
     });

@@ -740,6 +740,27 @@ describe('CmdkPaletteComponent', () => {
       expect(footer.textContent).toContain('Naviguer');
       expect(footer.textContent).not.toContain('Navigate');
     });
+
+    it('renders an overridden keyEscape label in both the input row and the footer, replacing the English default in both', () => {
+      reconfigure({ labels: () => ({ keyEscape: 'Echap' }) });
+      pressOpenShortcut();
+
+      const escHint = fixture.nativeElement.querySelector('.cmdk-input-esc-hint');
+      const footer = fixture.nativeElement.querySelector('.cmdk-footer');
+      expect(escHint.textContent).toBe('Echap');
+      expect(footer.textContent).toContain('Echap');
+      expect(footer.textContent).not.toContain('Esc');
+    });
+
+    it('renders an overridden ungroupedGroup label as the group header for a command with no group set', () => {
+      reconfigure({ labels: () => ({ ungroupedGroup: 'Autre' }) });
+      registry.register({ id: 'no-group', label: 'Ungrouped command', execute: () => {} });
+      pressOpenShortcut();
+
+      const list = fixture.nativeElement.querySelector('.cmdk-list');
+      expect(list.textContent).toContain('Autre');
+      expect(list.textContent).not.toContain('Other');
+    });
   });
 
   describe('recent searches', () => {

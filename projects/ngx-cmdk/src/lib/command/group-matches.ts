@@ -6,14 +6,13 @@ export interface CommandGroup<T> {
   matches: FuzzyMatch<T>[];
 }
 
-const UNGROUPED = 'Other';
-
 export function groupMatches<T extends Pick<Command, 'group' | 'label'>>(
   matches: readonly FuzzyMatch<T>[],
+  ungroupedLabel: string,
 ): CommandGroup<T>[] {
   const groups = new Map<string, FuzzyMatch<T>[]>();
   for (const match of matches) {
-    const name = match.item.group ?? UNGROUPED;
+    const name = match.item.group ?? ungroupedLabel;
     const bucket = groups.get(name);
     if (bucket) {
       bucket.push(match);

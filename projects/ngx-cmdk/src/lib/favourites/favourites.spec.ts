@@ -211,6 +211,36 @@ describe('FavouritesService', () => {
     }
   });
 
+  it('degrades gracefully when localStorage.getItem/removeItem throw, even though the localStorage reference itself was obtained successfully', () => {
+    const originalGetItem = Storage.prototype.getItem;
+    const originalRemoveItem = Storage.prototype.removeItem;
+    Storage.prototype.getItem = () => {
+      throw new DOMException('blocked', 'SecurityError');
+    };
+    Storage.prototype.removeItem = () => {
+      throw new DOMException('blocked', 'SecurityError');
+    };
+
+    try {
+      let service!: FavouritesService;
+      expect(() => {
+        service = setup(() => 'favs');
+      }).not.toThrow();
+      expect(service.favourites()).toEqual([]);
+
+      expect(() => service.add('Label', '/path')).not.toThrow();
+      expect(service.favourites()).toEqual([
+        expect.objectContaining({ label: 'Label', path: '/path' }),
+      ]);
+
+      expect(() => service.clear()).not.toThrow();
+      expect(service.favourites()).toEqual([]);
+    } finally {
+      Storage.prototype.getItem = originalGetItem;
+      Storage.prototype.removeItem = originalRemoveItem;
+    }
+  });
+
   it('clear() empties the in-memory list and the current key storage', () => {
     const service = setup(() => 'favs');
     service.add('First', '/first');
