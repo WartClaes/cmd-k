@@ -382,6 +382,37 @@ describe('CmdkSettingsPanelComponent', () => {
     expect(closeSpy).toHaveBeenCalled();
   });
 
+  it('remains keyboard-reachable after an external RecentSearchesService.clear() call destroys the focused Clear button', () => {
+    // Unlike the test above (which clicks this panel's own "Clear recent searches" button),
+    // this simulates the button's row disappearing for a reason other than this component's own
+    // clearRecentSearches() method — e.g. another part of the app calling
+    // RecentSearchesService.clear() directly, or a live recentSearchesStorageKey callback
+    // turning off entirely. The refocus mechanism must react to the service's own `recent()`
+    // signal, not just a local flag this component happens to set on its own button click.
+    setup({ recentSearchesStorageKey: () => 'recents' });
+    recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
+    fixture.detectChanges();
+
+    const closeSpy = vi.fn();
+    fixture.componentInstance.close.subscribe(closeSpy);
+
+    const clearButton: HTMLButtonElement = fixture.nativeElement.querySelector('.cmdk-settings-clear-button');
+    clearButton.focus();
+    expect(document.activeElement).toBe(clearButton);
+
+    recentSearches.clear();
+    fixture.detectChanges();
+
+    const root: HTMLElement = fixture.nativeElement.querySelector('.cmdk-settings');
+    expect(document.activeElement).not.toBe(document.body);
+    expect(root.contains(document.activeElement)).toBe(true);
+
+    (document.activeElement as HTMLElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
   it('a keydown inside the panel does not bubble to ancestors outside it', () => {
     setup({ favouritesStorageKey: () => 'favs' });
     const outerHandler = vi.fn();
