@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, effect, inject, signal } from '@angular/core';
 import { CMDK_CONFIG } from '../config/cmdk-config';
+import { CmdkIssueService } from '../issue/cmdk-issue';
 
 export interface FavouriteEntry {
   id: string;
@@ -24,6 +25,7 @@ function generateId(): string {
 @Injectable({ providedIn: 'root' })
 export class FavouritesService {
   private readonly config = inject(CMDK_CONFIG);
+  private readonly issues = inject(CmdkIssueService);
   private readonly localStorageRef = (() => {
     try {
       return inject(DOCUMENT).defaultView?.localStorage;
@@ -134,7 +136,7 @@ export class FavouritesService {
     try {
       raw = this.localStorageRef?.getItem(key);
     } catch (error) {
-      console.warn(`Failed to read favourites from localStorage key "${key}":`, error);
+      this.reportStorageIssue(key, error);
       return [];
     }
     if (!raw) {
@@ -156,7 +158,7 @@ export class FavouritesService {
         )
         .slice(0, MAX_FAVOURITE_ENTRIES);
     } catch (error) {
-      console.warn(`Failed to parse favourites from localStorage key "${key}":`, error);
+      this.reportStorageIssue(key, error);
       return [];
     }
   }
@@ -165,7 +167,7 @@ export class FavouritesService {
     try {
       this.localStorageRef?.setItem(key, JSON.stringify(entries));
     } catch (error) {
-      console.warn(`Failed to write favourites to localStorage key "${key}":`, error);
+      this.reportStorageIssue(key, error);
     }
   }
 
@@ -173,7 +175,12 @@ export class FavouritesService {
     try {
       this.localStorageRef?.removeItem(key);
     } catch (error) {
-      console.warn(`Failed to clear favourites from localStorage key "${key}":`, error);
+      this.reportStorageIssue(key, error);
     }
+  }
+
+  private reportStorageIssue(key: string, error: unknown): void {
+    console.warn(`Favourites localStorage access failed for key "${key}":`, error);
+    this.issues.report({ source: 'favourites-storage', key, error });
   }
 }

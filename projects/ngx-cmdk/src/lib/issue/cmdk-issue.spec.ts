@@ -94,4 +94,24 @@ describe('CmdkIssueService', () => {
       },
     ]);
   });
+
+  it('reports a recent-searches-storage issue and delivers it to listeners', () => {
+    const received: unknown[] = [];
+    service.onIssue((issue) => received.push(issue));
+
+    service.report({ source: 'recent-searches-storage', key: 'recents', error: new Error('quota exceeded') });
+
+    expect(received).toEqual([
+      { source: 'recent-searches-storage', key: 'recents', error: new Error('quota exceeded') },
+    ]);
+  });
+
+  it('reports a favourites-storage issue and delivers it to listeners', () => {
+    const received: unknown[] = [];
+    service.onIssue((issue) => received.push(issue));
+
+    service.report({ source: 'favourites-storage', key: 'favs', error: new Error('quota exceeded') });
+
+    expect(received).toEqual([{ source: 'favourites-storage', key: 'favs', error: new Error('quota exceeded') }]);
+  });
 });
