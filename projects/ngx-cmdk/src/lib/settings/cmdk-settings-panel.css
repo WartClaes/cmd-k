@@ -14,14 +14,14 @@
 }
 
 .cmdk-settings-section + .cmdk-settings-section {
-  border-top: 1px solid var(--cmdk-border, rgba(0, 0, 0, 0.1));
+  border-top: 1px solid var(--cmdk-border, oklch(0.92 0.008 50));
 }
 
 .cmdk-settings-section-label {
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--cmdk-muted, #888);
+  letter-spacing: 0.06em;
+  color: var(--cmdk-muted, oklch(0.55 0.01 50));
   margin-bottom: 8px;
   font-weight: 600;
 }
@@ -52,8 +52,8 @@
 }
 
 .cmdk-settings-add-button {
-  background: var(--cmdk-accent, #eef2ff);
-  border-radius: 4px;
+  background: var(--cmdk-accent, color-mix(in srgb, var(--cmdk-accent-color, #8b5cf6) 12%, transparent));
+  border-radius: 9px;
 }
 
 .cmdk-settings-add-button:disabled {
@@ -65,27 +65,27 @@
   flex: 1;
   min-width: 0;
   padding: 8px 10px;
-  border: 1px solid var(--cmdk-border, rgba(0, 0, 0, 0.1));
-  border-radius: 4px;
+  border: 1px solid var(--cmdk-border, oklch(0.9 0.01 50));
+  border-radius: 9px;
   background: transparent;
   color: inherit;
   font: inherit;
 }
 
 .cmdk-settings-input[readonly] {
-  color: var(--cmdk-muted, #888);
+  color: var(--cmdk-muted, oklch(0.55 0.01 50));
 }
 
 .cmdk-settings-limit-message {
   font-size: 13px;
-  color: var(--cmdk-muted, #888);
+  color: var(--cmdk-muted, oklch(0.55 0.01 50));
   margin: 4px 0;
 }
 
 .cmdk-settings-clear-button {
   padding: 6px 12px;
-  border: 1px solid var(--cmdk-border, rgba(0, 0, 0, 0.1));
-  border-radius: 4px;
+  border: 1px solid var(--cmdk-border, oklch(0.9 0.01 50));
+  border-radius: 9px;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -96,7 +96,7 @@
   display: flex;
   justify-content: flex-end;
   padding-top: 12px;
-  border-top: 1px solid var(--cmdk-border, rgba(0, 0, 0, 0.1));
+  border-top: 1px solid var(--cmdk-border, oklch(0.92 0.008 50));
 }
 
 .cmdk-settings-close-button {
@@ -105,8 +105,8 @@
   gap: 8px;
   padding: 6px 12px;
   border: none;
-  border-radius: 4px;
-  background: var(--cmdk-accent, #eef2ff);
+  border-radius: 10px;
+  background: var(--cmdk-accent, color-mix(in srgb, var(--cmdk-accent-color, #8b5cf6) 12%, transparent));
   color: inherit;
   font: inherit;
   font-size: 12px;
@@ -116,8 +116,10 @@
 }
 
 .cmdk-settings-close-hint {
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--cmdk-border, rgba(0, 0, 0, 0.1));
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--cmdk-border, oklch(0.95 0.008 50));
+  color: var(--cmdk-muted, oklch(0.45 0.01 50));
   font-size: 11px;
+  font-family: 'Space Mono', monospace;
 }

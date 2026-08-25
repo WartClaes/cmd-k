@@ -12,6 +12,12 @@
         <ngx-cmdk-settings-panel (close)="settingsOpen.set(false)" />
       } @else {
         <div class="cmdk-input-row">
+          <span class="cmdk-input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
+            </svg>
+          </span>
           @if (scopedProviderKey(); as scopedKey) {
             <span class="cmdk-scope-token">{{ scopedKey }}</span>
           }
@@ -24,6 +30,7 @@
             [value]="query()"
             (input)="onQueryChange($any($event.target).value)"
           />
+          <span class="cmdk-input-esc-hint">esc</span>
         </div>
         @if (scopedProviderKey() === null && searchProviders().length > 0) {
           <div class="cmdk-chip-row">
@@ -49,6 +56,12 @@
                   <span class="cmdk-item-main">
                     @if (result.icon) {
                       <span class="cmdk-item-icon" [class]="result.icon" aria-hidden="true"></span>
+                    } @else {
+                      <span
+                        class="cmdk-item-avatar"
+                        [attr.data-initial]="firstInitial(result.label)"
+                        aria-hidden="true"
+                      ></span>
                     }
                     <span class="cmdk-item-label">{{ result.label }}</span>
                   </span>
@@ -85,6 +98,12 @@
                           [class]="recent.icon"
                           aria-hidden="true"
                         ></span>
+                      } @else {
+                        <span
+                          class="cmdk-item-avatar"
+                          [attr.data-initial]="firstInitial(recent.label)"
+                          aria-hidden="true"
+                        ></span>
                       }
                       <span class="cmdk-item-label">{{ recent.label }}</span>
                     </span>
@@ -114,6 +133,12 @@
                           [class]="match.item.icon"
                           aria-hidden="true"
                         ></span>
+                      } @else {
+                        <span
+                          class="cmdk-item-avatar"
+                          [attr.data-initial]="firstInitial(resolveLabel(match.item))"
+                          aria-hidden="true"
+                        ></span>
                       }
                       <span class="cmdk-item-label">{{ resolveLabel(match.item) }}</span>
                     </span>
@@ -141,6 +166,11 @@
                     (click)="runFavourite(favourite)"
                   >
                     <span class="cmdk-item-main">
+                      <span
+                        class="cmdk-item-avatar"
+                        [attr.data-initial]="firstInitial(favourite.label)"
+                        aria-hidden="true"
+                      ></span>
                       <span class="cmdk-item-label">{{ favourite.label }}</span>
                     </span>
                     <span class="cmdk-shortcut">{{ formatShortcut('mod+' + ($index + 1)) }}</span>
