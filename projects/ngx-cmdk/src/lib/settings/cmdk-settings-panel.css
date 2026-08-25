@@ -14,7 +14,7 @@
 }
 
 .cmdk-settings-section + .cmdk-settings-section {
-  border-top: 1px solid var(--cmdk-border, oklch(0.92 0.008 50));
+  border-top: 1px solid var(--cmdk-divider, oklch(0.92 0.008 50));
 }
 
 .cmdk-settings-section-label {
@@ -96,7 +96,7 @@
   display: flex;
   justify-content: flex-end;
   padding-top: 12px;
-  border-top: 1px solid var(--cmdk-border, oklch(0.92 0.008 50));
+  border-top: 1px solid var(--cmdk-divider, oklch(0.92 0.008 50));
 }
 
 .cmdk-settings-close-button {
@@ -118,8 +118,8 @@
 .cmdk-settings-close-hint {
   padding: 3px 7px;
   border-radius: 6px;
-  background: var(--cmdk-border, oklch(0.95 0.008 50));
-  color: var(--cmdk-muted, oklch(0.45 0.01 50));
+  background: var(--cmdk-key-bg, oklch(0.95 0.008 50));
+  color: var(--cmdk-key-fg, oklch(0.45 0.01 50));
   font-size: 11px;
   font-family: 'Space Mono', monospace;
 }
