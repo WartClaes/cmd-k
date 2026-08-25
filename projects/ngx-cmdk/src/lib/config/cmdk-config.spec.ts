@@ -71,6 +71,13 @@ describe('provideCmdk', () => {
     expect(withFavourites).toBeTruthy();
     expect(withoutFavourites).toBeTruthy();
   });
+
+  it('accepts an optional labels callback and leaves it unset by default', () => {
+    const withLabels = provideCmdk({ labels: () => ({ closeSettings: 'FERMER' }) });
+    const withoutLabels = provideCmdk();
+    expect(withLabels).toBeTruthy();
+    expect(withoutLabels).toBeTruthy();
+  });
 });
 
 describe('CMDK_CONFIG default factory', () => {
