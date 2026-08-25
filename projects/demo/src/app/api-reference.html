@@ -1,4 +1,4 @@
-<section class="doc-section">
+<section class="doc-section" id="api">
   <h2>API reference</h2>
 
   <article>
@@ -7,7 +7,7 @@
       The shape every registered command has. Only <code>label</code> and
       <code>execute</code> are required.
     </p>
-    <pre class="doc-code"><code>{{ commandSnippet }}</code></pre>
+    <app-doc-code-block [code]="commandSnippet" />
   </article>
 
   <article>
@@ -22,7 +22,7 @@
       <code>shortcut</code> throws immediately, rather than silently
       overriding the earlier registration.
     </p>
-    <pre class="doc-code"><code>{{ registrySnippet }}</code></pre>
+    <app-doc-code-block [code]="registrySnippet" />
   </article>
 
   <article>
@@ -56,7 +56,7 @@
       Configures the palette's open shortcut app-wide. Call it once in
       <code>app.config.ts</code>.
     </p>
-    <pre class="doc-code"><code>{{ provideCmdkSnippet }}</code></pre>
+    <app-doc-code-block [code]="provideCmdkSnippet" />
   </article>
 
   <article>
@@ -69,8 +69,8 @@
       single flat list. With zero providers registered, typing behaves
       exactly as it always has: Commands keep fuzzy-matching.
     </p>
-    <pre class="doc-code"><code>{{ searchProviderSnippet }}</code></pre>
-    <pre class="doc-code"><code>{{ searchRegistrySnippet }}</code></pre>
+    <app-doc-code-block [code]="searchProviderSnippet" />
+    <app-doc-code-block [code]="searchRegistrySnippet" />
     <p>
       A provider that's still running when <code>searchTimeoutMs</code>
       (default 5000ms, configurable via <code>provideCmdk()</code>)
@@ -116,7 +116,7 @@
       registers again. If <code>resolve()</code> fails or returns
       <code>null</code>, the entry is confirmed gone and removed for real.
     </p>
-    <pre class="doc-code"><code>{{ recentSearchesSnippet }}</code></pre>
+    <app-doc-code-block [code]="recentSearchesSnippet" />
   </article>
 
   <article>
@@ -150,7 +150,7 @@
       itself is reachable only when at least one of those two keys is
       set; with neither configured, <code>,</code> does nothing.
     </p>
-    <pre class="doc-code"><code>{{ favouritesSnippet }}</code></pre>
+    <app-doc-code-block [code]="favouritesSnippet" />
   </article>
 
   <article>
@@ -173,7 +173,7 @@
       the one label containing a <code>%max%</code> token, which is
       substituted with the actual favourites cap before it's rendered.
     </p>
-    <pre class="doc-code"><code>{{ labelsSnippet }}</code></pre>
+    <app-doc-code-block [code]="labelsSnippet" />
   </article>
 
   <article>
@@ -185,7 +185,7 @@
       and also reported through this service, so you can build your own
       UI on top instead of the library imposing one.
     </p>
-    <pre class="doc-code"><code>{{ cmdkIssueSnippet }}</code></pre>
+    <app-doc-code-block [code]="cmdkIssueSnippet" />
   </article>
 
   <article>

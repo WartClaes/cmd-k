@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
+import { DocCodeBlock } from './doc-code-block';
 
 @Component({
   selector: 'app-api-reference',
-  imports: [],
+  imports: [DocCodeBlock],
   templateUrl: './api-reference.html',
   styleUrl: './api-reference.css',
 })

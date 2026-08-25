@@ -1,58 +1,83 @@
-<main class="demo-app">
-  <header class="demo-hero">
-    <h1>ngx-cmdk</h1>
-    <p class="demo-tagline">
-      A Cmd/Ctrl+K style command palette for Angular. Any component,
-      directive, guard, or service anywhere in your app can register
-      commands via dependency injection.
-    </p>
-    <p class="demo-callout">
-      Press <kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> to try it right now — the
-      palette below is the real, live component, not a screenshot.
-    </p>
+<main class="demo-app" [attr.data-theme]="darkMode() ? 'dark' : null">
+  <header class="demo-site-header">
+    <div class="demo-brand">
+      <span class="demo-logo-badge">K</span>
+      <span class="demo-wordmark">ngx-cmdk</span>
+    </div>
+    <nav class="demo-nav-links">
+      <a href="#install">Install</a>
+      <a href="#demo">Demo</a>
+      <a href="#api">API</a>
+      <a href="https://github.com/WartClaes/cmd-k">GitHub</a>
+    </nav>
+    <button
+      type="button"
+      class="demo-theme-toggle"
+      [class.demo-theme-toggle--on]="darkMode()"
+      (click)="toggleDarkMode()"
+      aria-label="Toggle dark mode"
+    >
+      <span class="demo-theme-toggle-thumb"></span>
+    </button>
   </header>
 
-  <section class="demo-section">
-    <h2>Install &amp; quick start</h2>
-    <pre class="doc-code"><code>{{ installSnippet }}</code></pre>
-    <pre class="doc-code"><code>{{ providerSnippet }}</code></pre>
-    <pre class="doc-code"><code>{{ templateSnippet }}</code></pre>
-    <pre class="doc-code"><code>{{ registerSnippet }}</code></pre>
-  </section>
-
-  <section class="demo-section">
-    <h2>Live demo</h2>
-    <p>
-      These panels register real commands and a real search provider from
-      independent components, exactly as a consuming app would. Open the
-      palette and try "Go to Section A", "Show Alert", "Cause Error", or
-      type a fruit name to search. Press <kbd>,</kbd> with an empty query to
-      open Settings and add your own Favourites — each gets a
-      <kbd>⌘1</kbd>–<kbd>⌘9</kbd> shortcut based on its position.
-    </p>
-    <app-demo-actions />
-    <app-demo-nav />
-    <app-demo-search />
-
-    <section class="demo-panel">
-      <h3>Activity log</h3>
-      <ul>
-        @for (entry of log.recent(); track $index) {
-          <li>{{ entry }}</li>
-        } @empty {
-          <li>Nothing yet — try a command.</li>
-        }
-      </ul>
+  <div class="demo-content">
+    <section class="demo-hero">
+      <div class="demo-hero-glow" aria-hidden="true"></div>
+      <h1><span class="demo-title-text">ngx-cmdk</span></h1>
+      <p class="demo-tagline">
+        A Cmd/Ctrl+K style command palette for Angular. Any component,
+        directive, guard, or service anywhere in your app can register
+        commands via dependency injection.
+      </p>
+      <p class="demo-callout">
+        Press <kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> to try it right now — the
+        palette below is the real, live component, not a screenshot.
+      </p>
     </section>
-  </section>
 
-  <app-api-reference />
+    <section class="demo-section" id="install">
+      <h2>Install &amp; quick start</h2>
+      <app-doc-code-block label="terminal" [code]="installSnippet" />
+      <app-doc-code-block label="app.config.ts" [code]="providerSnippet" />
+      <app-doc-code-block label="app.component.html" [code]="templateSnippet" />
+      <app-doc-code-block label="app.component.ts" [code]="registerSnippet" />
+    </section>
 
-  <footer class="demo-footer">
-    <a href="https://github.com/WartClaes/cmd-k">GitHub</a>
-    ·
-    <span>MIT License</span>
-  </footer>
+    <section class="demo-section" id="demo">
+      <h2>Live demo</h2>
+      <p>
+        These panels register real commands and a real search provider from
+        independent components, exactly as a consuming app would. Open the
+        palette and try "Go to Section A", "Show Alert", "Cause Error", or
+        type a fruit name to search. Press <kbd>,</kbd> with an empty query to
+        open Settings and add your own Favourites — each gets a
+        <kbd>⌘1</kbd>–<kbd>⌘9</kbd> shortcut based on its position.
+      </p>
+      <app-demo-actions />
+      <app-demo-nav />
+      <app-demo-search />
+
+      <section class="demo-panel">
+        <h3>Activity log</h3>
+        <ul>
+          @for (entry of log.recent(); track $index) {
+            <li>{{ entry }}</li>
+          } @empty {
+            <li>Nothing yet — try a command.</li>
+          }
+        </ul>
+      </section>
+    </section>
+
+    <app-api-reference />
+
+    <footer class="demo-footer">
+      <a href="https://github.com/WartClaes/cmd-k">GitHub</a>
+      ·
+      <span>MIT License</span>
+    </footer>
+  </div>
 
   <ngx-cmdk-palette />
 </main>
