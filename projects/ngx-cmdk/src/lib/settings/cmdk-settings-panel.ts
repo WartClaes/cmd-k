@@ -39,7 +39,7 @@ export class CmdkSettingsPanelComponent {
   protected readonly showRecentSearchesSection = computed(() => this.config.recentSearchesStorageKey?.() != null);
   protected readonly canSubmit = computed(() => this.newLabel().trim().length > 0 && this.newPath().trim().length > 0);
   protected readonly favouritesLimitMessage = computed(() =>
-    this.labels().favouritesLimitReached.replace('%max%', String(MAX_FAVOURITE_ENTRIES)),
+    this.labels().favouritesLimitReached.replaceAll('%max%', String(this.maxFavourites)),
   );
 
   constructor() {

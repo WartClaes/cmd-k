@@ -2,29 +2,29 @@ import { Injectable, computed, inject } from '@angular/core';
 import { CMDK_CONFIG } from './cmdk-config';
 
 export interface CmdkLabels {
-  dialogLabel: string;
-  searchPlaceholderDefault: string;
-  searchPlaceholderActive: string;
-  noResults: string;
-  searching: string;
-  noMatchingCommands: string;
-  recentSearchesGroup: string;
-  favouritesGroup: string;
-  footerNavigate: string;
-  footerSelect: string;
-  footerClose: string;
-  footerSettings: string;
-  moveUp: string;
-  moveDown: string;
-  removeFavourite: string;
-  addFavourite: string;
-  labelPlaceholder: string;
-  pathPlaceholder: string;
-  favouritesLimitReached: string;
-  clearRecentSearches: string;
-  recentSearchesCleared: string;
-  noRecentSearchesFound: string;
-  closeSettings: string;
+  dialogLabel: string;                 // aria-label on the palette dialog — "Command palette"
+  searchPlaceholderDefault: string;    // input aria-label, browse mode — "Search commands"
+  searchPlaceholderActive: string;     // input aria-label, search mode — "Search"
+  noResults: string;                   // "No results"
+  searching: string;                   // "Searching…"
+  noMatchingCommands: string;          // "No matching commands"
+  recentSearchesGroup: string;         // "Recent searches" (palette group + settings section)
+  favouritesGroup: string;             // "Favourites" (palette group + settings section)
+  footerNavigate: string;              // "Navigate"
+  footerSelect: string;                // "Select"
+  footerClose: string;                 // "Close"
+  footerSettings: string;              // "Settings"
+  moveUp: string;                      // aria-label "Move up"
+  moveDown: string;                    // aria-label "Move down"
+  removeFavourite: string;             // aria-label "Remove favourite"
+  addFavourite: string;                // aria-label "Add favourite"
+  labelPlaceholder: string;            // input placeholder "Label"
+  pathPlaceholder: string;             // input placeholder "Path"
+  favouritesLimitReached: string;      // must contain a "%max%" token, substituted with the actual favourites cap — "Maximum of %max% favourites reached — remove one to add another."
+  clearRecentSearches: string;         // button text
+  recentSearchesCleared: string;       // confirmation message
+  noRecentSearchesFound: string;       // empty message
+  closeSettings: string;               // "CLOSE SETTINGS"
 }
 
 export const DEFAULT_CMDK_LABELS: CmdkLabels = {
@@ -57,5 +57,11 @@ export const DEFAULT_CMDK_LABELS: CmdkLabels = {
 export class CmdkLabelsService {
   private readonly config = inject(CMDK_CONFIG);
 
-  readonly labels = computed(() => ({ ...DEFAULT_CMDK_LABELS, ...this.config.labels?.() }));
+  readonly labels = computed(() => {
+    const override = this.config.labels?.() ?? {};
+    const defined = Object.fromEntries(
+      Object.entries(override).filter(([, value]) => value !== undefined),
+    );
+    return { ...DEFAULT_CMDK_LABELS, ...defined };
+  });
 }

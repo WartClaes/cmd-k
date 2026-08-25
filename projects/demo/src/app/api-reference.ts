@@ -76,6 +76,7 @@ class RecentSearchesService {
   recentSearchesStorageKey?: () => string | null;
   favouritesStorageKey?: () => string | null;   // unset = feature is fully off
   navigate?: (path: string) => void | Promise<void>;
+  labels?: () => Partial<CmdkLabels>;
 }): EnvironmentProviders;
 
 class FavouritesService {
@@ -85,6 +86,18 @@ class FavouritesService {
   moveUp(id: string): void;
   moveDown(id: string): void;
   clear(): void;
+}`;
+
+  protected readonly labelsSnippet = `interface CmdkLabels {
+  dialogLabel: string;
+  searchPlaceholderDefault: string;
+  /* ...23 keys total... */
+  favouritesLimitReached: string;   // contains a %max% token
+  closeSettings: string;
+}
+
+class CmdkLabelsService {
+  readonly labels: Signal<CmdkLabels>;
 }`;
 
   protected readonly cmdkIssueSnippet = `type CmdkIssue =

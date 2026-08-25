@@ -154,6 +154,29 @@
   </article>
 
   <article>
+    <h3>Translatable labels</h3>
+    <p>
+      Every piece of UI text the palette and Settings render — dialog and
+      input <code>aria-label</code>s, group headings, footer hints, button
+      labels, placeholders, and messages — comes from
+      <code>CmdkLabels</code>. The <code>labels</code> option is optional
+      and defaults entirely to English (<code>DEFAULT_CMDK_LABELS</code>);
+      a partial override you provide is merged over those defaults, so any
+      key you don't set keeps its English text.
+    </p>
+    <p>
+      Like <code>favouritesStorageKey</code> and
+      <code>recentSearchesStorageKey</code>, <code>labels</code> is a
+      callback rather than a static object — read a locale signal inside
+      it and the palette's text switches live whenever that signal
+      changes, no remount required. <code>favouritesLimitReached</code> is
+      the one label containing a <code>%max%</code> token, which is
+      substituted with the actual favourites cap before it's rendered.
+    </p>
+    <pre class="doc-code"><code>{{ labelsSnippet }}</code></pre>
+  </article>
+
+  <article>
     <h3>CmdkIssueService</h3>
     <p>
       Every error this library catches on your behalf — a failing

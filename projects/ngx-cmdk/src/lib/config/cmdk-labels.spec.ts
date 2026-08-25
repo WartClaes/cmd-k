@@ -19,6 +19,14 @@ describe('CmdkLabelsService', () => {
     expect(service.labels().footerNavigate).toBe(DEFAULT_CMDK_LABELS.footerNavigate);
   });
 
+  it('falls back to the English default when an override explicitly returns undefined for a key', () => {
+    TestBed.configureTestingModule({
+      providers: [provideCmdk({ labels: () => ({ closeSettings: undefined }) })],
+    });
+    const service = TestBed.inject(CmdkLabelsService);
+    expect(service.labels().closeSettings).toBe(DEFAULT_CMDK_LABELS.closeSettings);
+  });
+
   it('re-computes live when the labels callback reads a signal that later changes', () => {
     const activeLabel = signal('English close');
     TestBed.configureTestingModule({
