@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CmdkSettingsPanelComponent } from './cmdk-settings-panel';
 import { provideCmdk } from '../config/cmdk-config';
@@ -48,6 +49,31 @@ describe('CmdkSettingsPanelComponent', () => {
     setup({ favouritesStorageKey: () => 'favs', recentSearchesStorageKey: () => 'recents' });
     expect(fixture.nativeElement.textContent).toContain('Favourites');
     expect(fixture.nativeElement.textContent).toContain('Recent searches');
+  });
+
+  it('the section gates are live — a section disappears/reappears mid-session as its storage key changes, without recreating the component', () => {
+    // Uses a signal-backed key rather than a fixed function, so this genuinely exercises
+    // liveness: a `computed()` re-evaluates when its signal changes, but a value snapshotted
+    // once at construction (a plain field instead of `computed`) would pass every other test in
+    // this file identically, since none of them ever mutate the key after setup().
+    const favouritesKey = signal<string | null>('favs');
+    const recentsKey = signal<string | null>('recents');
+    setup({ favouritesStorageKey: () => favouritesKey(), recentSearchesStorageKey: () => recentsKey() });
+    expect(fixture.nativeElement.textContent).toContain('Favourites');
+    expect(fixture.nativeElement.textContent).toContain('Recent searches');
+
+    favouritesKey.set(null);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Favourites');
+    expect(fixture.nativeElement.textContent).toContain('Recent searches');
+
+    recentsKey.set(null);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Recent searches');
+
+    favouritesKey.set('favs');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Favourites');
   });
 
   it('focuses the Label input on creation', () => {
@@ -346,6 +372,41 @@ describe('CmdkSettingsPanelComponent', () => {
 
     expect(favouritesService.favourites()).toHaveLength(9);
     expect(fixture.nativeElement.querySelector('.cmdk-settings-add-row')).toBeNull();
+
+    const root: HTMLElement = fixture.nativeElement.querySelector('.cmdk-settings');
+    expect(document.activeElement).not.toBe(document.body);
+    expect(root.contains(document.activeElement)).toBe(true);
+
+    (document.activeElement as HTMLElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it('remains keyboard-reachable after reordering a favourite into a boundary position disables the very button that was just clicked (and still holds focus)', () => {
+    // Moving "Second" up to first position sets [disabled] on its own move-up button — the
+    // element the browser just gave focus to via the click that triggered this. Per default
+    // browser behavior, setting `disabled` on the focused control forces a blur, the same
+    // focus-loss hazard the afterRenderEffect exists to catch — this time triggered by a
+    // reorder rather than a removal/add/clear.
+    setup({ favouritesStorageKey: () => 'favs' });
+    favouritesService.add('First', '/first');
+    favouritesService.add('Second', '/second');
+    fixture.detectChanges();
+
+    const closeSpy = vi.fn();
+    fixture.componentInstance.close.subscribe(closeSpy);
+
+    // Row order is [row1-up, row1-down, row2-up, row2-down]; index 2 is Second's move-up.
+    const moveButtons = fixture.nativeElement.querySelectorAll('.cmdk-settings-move-button');
+    const secondMoveUp: HTMLButtonElement = moveButtons[2];
+    secondMoveUp.focus();
+    expect(document.activeElement).toBe(secondMoveUp);
+
+    secondMoveUp.click();
+    fixture.detectChanges();
+
+    expect(favouritesService.favourites().map((f) => f.label)).toEqual(['Second', 'First']);
 
     const root: HTMLElement = fixture.nativeElement.querySelector('.cmdk-settings');
     expect(document.activeElement).not.toBe(document.body);
