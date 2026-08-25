@@ -30,6 +30,7 @@
   --cmdk-shadow: 0 20px 60px oklch(0.15 0.01 40 / 0.25);
   --cmdk-radius: 22px;
   --cmdk-font: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --cmdk-mono-font: 'Space Mono', ui-monospace, Menlo, monospace;
 }
 
 [data-theme='dark'] {
@@ -45,8 +46,8 @@
   /* --demo-accent / --demo-accent-2 / --demo-accent-gradient are theme-independent — no override. */
 
   /* Dark equivalents of the palette's own light-mode fallbacks, derived from the same tonal
-     relationships as the --demo-* tokens above. --cmdk-shadow/--cmdk-radius/--cmdk-font are
-     theme-independent and intentionally left undefined here. */
+     relationships as the --demo-* tokens above. --cmdk-shadow/--cmdk-radius/--cmdk-font/
+     --cmdk-mono-font are theme-independent and intentionally left undefined here. */
   --cmdk-bg: oklch(0.15 0.01 40);
   --cmdk-fg: oklch(0.94 0.006 50);
   --cmdk-border: oklch(0.32 0.012 40);
@@ -125,12 +126,6 @@ body {
 .demo-button:hover {
   border-color: var(--demo-accent-2);
   color: var(--demo-accent-2);
-}
-
-.doc-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
 }
 
 /*

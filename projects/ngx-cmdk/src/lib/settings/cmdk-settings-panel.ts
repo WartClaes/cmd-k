@@ -104,17 +104,42 @@ export class CmdkSettingsPanelComponent {
     }
   }
 
+  // Registration requires a shortcut key to be a single a-z letter or digit, so none of these
+  // key names can ever be part of a real registered command/favourite shortcut — but they ARE
+  // the palette's own reserved list-view keys (case 'ArrowDown', case 'Enter', etc. in
+  // CmdkPaletteComponent.onKeydown). Letting one of these bubble up, even with a modifier held,
+  // would hijack list-view behavior (Enter trying to execute a stale selectedIndex, ArrowDown
+  // hijacking text-cursor movement) instead of the shortcut-matching `default` case.
+  private static readonly RESERVED_LIST_VIEW_KEYS = new Set([
+    'ArrowDown',
+    'ArrowUp',
+    'Enter',
+    'Backspace',
+    'Tab',
+  ]);
+
   protected onKeydown(event: KeyboardEvent): void {
-    event.stopPropagation();
     if (event.key === 'Escape') {
+      event.stopPropagation();
       event.preventDefault();
       this.close.emit();
       return;
     }
     const isTextInput = (event.target as HTMLElement).tagName === 'INPUT';
     if (event.key === ',' && !isTextInput) {
+      event.stopPropagation();
       event.preventDefault();
       this.close.emit();
+      return;
+    }
+    // A real modifier (mod/ctrl/alt/cmd) means this keydown could be a registered command or
+    // favourite shortcut, which must fire regardless of which view the palette currently has
+    // open — the same behavior the main search input already allows. Every other key (plain
+    // typing, Arrow navigation, Enter, Tab) stays isolated to this panel's own keydown handling.
+    const hasRealModifier = event.metaKey || event.ctrlKey || event.altKey;
+    const isReservedListViewKey = CmdkSettingsPanelComponent.RESERVED_LIST_VIEW_KEYS.has(event.key);
+    if (!hasRealModifier || isReservedListViewKey) {
+      event.stopPropagation();
     }
   }
 }

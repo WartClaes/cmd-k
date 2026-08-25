@@ -85,8 +85,13 @@ export class CmdkPaletteComponent {
     () => this.searchResults()?.[this.selectedIndex()],
   );
 
+  // Deliberately checks query emptiness directly rather than isSearchModeActive(): that computed
+  // also requires hasProviders(), so with zero search providers registered it's always false
+  // regardless of what's typed — routing visibility through it would incorrectly keep
+  // favourites/recents visible while the user fuzzy-searches Commands by typing, contradicting
+  // the documented "only in the empty-query, unscoped browse view" contract.
   protected readonly visibleRecents = computed(() => {
-    if (this.isSearchModeActive() || this.scopedProviderKey() !== null) {
+    if (this.query().trim().length > 0 || this.scopedProviderKey() !== null) {
       return [] as readonly RecentSearchEntry[];
     }
     const registeredKeys = new Set(this.searchRegistry.providers().map((p) => p.key));
@@ -94,7 +99,7 @@ export class CmdkPaletteComponent {
   });
 
   protected readonly visibleFavourites = computed(() => {
-    if (this.isSearchModeActive() || this.scopedProviderKey() !== null) {
+    if (this.query().trim().length > 0 || this.scopedProviderKey() !== null) {
       return [] as readonly FavouriteEntry[];
     }
     return this.favourites.favourites();

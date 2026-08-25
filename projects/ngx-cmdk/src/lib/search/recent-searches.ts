@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, effect, inject, signal } from '@angular/core';
 import { CMDK_CONFIG } from '../config/cmdk-config';
+import { CmdkIssueService } from '../issue/cmdk-issue';
 import type { SearchResult } from './search.model';
 
 export interface RecentSearchEntry {
@@ -17,6 +18,7 @@ const MAX_RECENT_ENTRIES = 10;
 @Injectable({ providedIn: 'root' })
 export class RecentSearchesService {
   private readonly config = inject(CMDK_CONFIG);
+  private readonly issues = inject(CmdkIssueService);
   private readonly localStorageRef = (() => {
     try {
       return inject(DOCUMENT).defaultView?.localStorage;
@@ -103,7 +105,7 @@ export class RecentSearchesService {
     try {
       raw = this.localStorageRef?.getItem(key);
     } catch (error) {
-      console.warn(`Failed to read recent searches from localStorage key "${key}":`, error);
+      this.reportStorageIssue(key, error);
       return [];
     }
     if (!raw) {
@@ -126,7 +128,7 @@ export class RecentSearchesService {
         )
         .slice(0, MAX_RECENT_ENTRIES);
     } catch (error) {
-      console.warn(`Failed to parse recent searches from localStorage key "${key}":`, error);
+      this.reportStorageIssue(key, error);
       return [];
     }
   }
@@ -135,7 +137,7 @@ export class RecentSearchesService {
     try {
       this.localStorageRef?.setItem(key, JSON.stringify(entries));
     } catch (error) {
-      console.warn(`Failed to write recent searches to localStorage key "${key}":`, error);
+      this.reportStorageIssue(key, error);
     }
   }
 
@@ -143,7 +145,12 @@ export class RecentSearchesService {
     try {
       this.localStorageRef?.removeItem(key);
     } catch (error) {
-      console.warn(`Failed to clear recent searches from localStorage key "${key}":`, error);
+      this.reportStorageIssue(key, error);
     }
+  }
+
+  private reportStorageIssue(key: string, error: unknown): void {
+    console.warn(`Recent searches localStorage access failed for key "${key}":`, error);
+    this.issues.report({ source: 'recent-searches-storage', key, error });
   }
 }
