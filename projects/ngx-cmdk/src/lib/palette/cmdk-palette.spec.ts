@@ -48,6 +48,29 @@ describe('CmdkPaletteComponent', () => {
     expect(document.activeElement).toBe(input);
   });
 
+  it('sets the dialog aria-label to "Command palette"', () => {
+    pressOpenShortcut();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.cmdk-panel');
+    expect(panel.getAttribute('aria-label')).toBe('Command palette');
+  });
+
+  it('sets the search input aria-label to "Search commands" in browse mode', () => {
+    pressOpenShortcut();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+    expect(input.getAttribute('aria-label')).toBe('Search commands');
+  });
+
+  it('sets the search input aria-label to "Search" once search mode is active', () => {
+    const searchRegistry = TestBed.inject(SearchRegistryService);
+    searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+    pressOpenShortcut();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+    input.value = 'app';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(input.getAttribute('aria-label')).toBe('Search');
+  });
+
   it('lists registered commands grouped by their group name', () => {
     registry.register({ id: 'a', label: 'Show Alert', execute: () => {}, group: 'Actions' });
     registry.register({ id: 'b', label: 'Go Home', execute: () => {}, group: 'Navigation' });
@@ -146,6 +169,16 @@ describe('CmdkPaletteComponent', () => {
     input.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.cmdk-empty')).not.toBeNull();
+  });
+
+  it('shows "No matching commands" when there are no commands, recents, or favourites and the query is non-empty', () => {
+    registry.register({ id: 'a', label: 'Alpha', execute: () => {} });
+    pressOpenShortcut();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+    input.value = 'zzz';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-empty')?.textContent).toBe('No matching commands');
   });
 
   it('renders a command shortcut hint using the platform symbol', () => {
@@ -681,6 +714,31 @@ describe('CmdkPaletteComponent', () => {
       input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.cmdk-footer')).not.toBeNull();
+    });
+  });
+
+  describe('labels', () => {
+    function reconfigure(config: Parameters<typeof provideCmdk>[0]): void {
+      fixture.nativeElement.remove();
+      TestBed.resetTestingModule();
+      Object.defineProperty(window.navigator, 'platform', { value: 'MacIntel', configurable: true });
+      TestBed.configureTestingModule({
+        imports: [CmdkPaletteComponent],
+        providers: [provideCmdk({ shortcut: 'mod+k', ...config })],
+      });
+      fixture = TestBed.createComponent(CmdkPaletteComponent);
+      document.body.appendChild(fixture.nativeElement);
+      registry = TestBed.inject(CommandRegistryService);
+      fixture.detectChanges();
+    }
+
+    it('renders an overridden label in place of its English default', () => {
+      reconfigure({ labels: () => ({ footerNavigate: 'Naviguer' }) });
+      pressOpenShortcut();
+
+      const footer = fixture.nativeElement.querySelector('.cmdk-footer');
+      expect(footer.textContent).toContain('Naviguer');
+      expect(footer.textContent).not.toContain('Navigate');
     });
   });
 

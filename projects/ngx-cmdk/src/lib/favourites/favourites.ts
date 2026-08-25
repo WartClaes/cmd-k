@@ -8,7 +8,7 @@ export interface FavouriteEntry {
   path: string;
 }
 
-const MAX_FAVOURITE_ENTRIES = 9;
+export const MAX_FAVOURITE_ENTRIES = 9;
 
 function generateId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {

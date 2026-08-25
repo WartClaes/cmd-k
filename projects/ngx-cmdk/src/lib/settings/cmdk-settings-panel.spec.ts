@@ -138,6 +138,46 @@ describe('CmdkSettingsPanelComponent', () => {
     expect(favouritesService.favourites().map((f) => f.label)).toEqual(['Second']);
   });
 
+  it('the move-up and move-down buttons carry distinct, correctly-assigned aria-labels', () => {
+    setup({ favouritesStorageKey: () => 'favs' });
+    favouritesService.add('First', '/first');
+    fixture.detectChanges();
+
+    // Row order is [move-up, move-down] (see the "clicking move-up/move-down reorders
+    // favourites" test below). Assert aria-label by *functional* position — clicking the
+    // "Move up" button actually moves up — rather than merely that both label strings exist
+    // somewhere in the DOM, which would not catch the two aria-label bindings being swapped.
+    const moveButtons = fixture.nativeElement.querySelectorAll('.cmdk-settings-move-button');
+    expect(moveButtons[0].getAttribute('aria-label')).toBe('Move up');
+    expect(moveButtons[1].getAttribute('aria-label')).toBe('Move down');
+
+    const byLabel = fixture.nativeElement.querySelector('[aria-label="Move up"]');
+    const byLabelDown = fixture.nativeElement.querySelector('[aria-label="Move down"]');
+    expect(byLabel).toBe(moveButtons[0]);
+    expect(byLabelDown).toBe(moveButtons[1]);
+  });
+
+  it('the remove button has aria-label "Remove favourite"', () => {
+    setup({ favouritesStorageKey: () => 'favs' });
+    favouritesService.add('First', '/first');
+    fixture.detectChanges();
+
+    const removeButton: HTMLButtonElement = fixture.nativeElement.querySelector('.cmdk-settings-remove-button');
+    expect(removeButton.getAttribute('aria-label')).toBe('Remove favourite');
+  });
+
+  it('the add button has aria-label "Add favourite"', () => {
+    setup({ favouritesStorageKey: () => 'favs' });
+    const addButton: HTMLButtonElement = fixture.nativeElement.querySelector('.cmdk-settings-add-button');
+    expect(addButton.getAttribute('aria-label')).toBe('Add favourite');
+  });
+
+  it('the Path input has placeholder "Path"', () => {
+    setup({ favouritesStorageKey: () => 'favs' });
+    const pathInput: HTMLInputElement = fixture.nativeElement.querySelector('input[placeholder="Path"]');
+    expect(pathInput).not.toBeNull();
+  });
+
   it('clicking move-up/move-down reorders favourites', () => {
     setup({ favouritesStorageKey: () => 'favs' });
     favouritesService.add('First', '/first');
@@ -158,7 +198,9 @@ describe('CmdkSettingsPanelComponent', () => {
     fixture.detectChanges();
     expect(recentSearches.recent()).toHaveLength(1);
 
-    fixture.nativeElement.querySelector('.cmdk-settings-clear-button').click();
+    const clearButton: HTMLButtonElement = fixture.nativeElement.querySelector('.cmdk-settings-clear-button');
+    expect(clearButton.textContent).toContain('Clear recent searches');
+    clearButton.click();
 
     expect(recentSearches.recent()).toEqual([]);
   });
@@ -208,9 +250,9 @@ describe('CmdkSettingsPanelComponent', () => {
     const closeSpy = vi.fn();
     fixture.componentInstance.close.subscribe(closeSpy);
 
-    fixture.nativeElement.querySelector('.cmdk-settings-close-button').dispatchEvent(
-      new KeyboardEvent('keydown', { key: ',', bubbles: true }),
-    );
+    const closeButton: HTMLButtonElement = fixture.nativeElement.querySelector('.cmdk-settings-close-button');
+    expect(closeButton.textContent).toContain('CLOSE SETTINGS');
+    closeButton.dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
 
     expect(closeSpy).toHaveBeenCalled();
   });
@@ -325,5 +367,28 @@ describe('CmdkSettingsPanelComponent', () => {
     } finally {
       document.body.removeEventListener('keydown', outerHandler);
     }
+  });
+
+  describe('labels', () => {
+    it('renders an overridden label in place of its English default', () => {
+      setup({ favouritesStorageKey: () => 'favs', labels: () => ({ closeSettings: 'FERMER' }) });
+
+      expect(fixture.nativeElement.textContent).toContain('FERMER');
+      expect(fixture.nativeElement.textContent).not.toContain('CLOSE SETTINGS');
+    });
+
+    it('substitutes %max% in an overridden favourites-limit message with the actual cap', () => {
+      setup({
+        favouritesStorageKey: () => 'favs',
+        labels: () => ({ favouritesLimitReached: 'Cap of %max% hit.' }),
+      });
+      for (let i = 0; i < 9; i++) {
+        favouritesService.add(`Item ${i}`, `/item-${i}`);
+      }
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Cap of 9 hit.');
+      expect(fixture.nativeElement.textContent).not.toContain('%max%');
+    });
   });
 });

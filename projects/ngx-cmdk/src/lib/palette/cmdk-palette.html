@@ -4,7 +4,7 @@
       class="cmdk-panel"
       role="dialog"
       aria-modal="true"
-      aria-label="Command palette"
+      [attr.aria-label]="labels().dialogLabel"
       (click)="$event.stopPropagation()"
       (keydown)="onKeydown($event)"
     >
@@ -57,15 +57,15 @@
                   }
                 </div>
               } @empty {
-                <div class="cmdk-empty">No results</div>
+                <div class="cmdk-empty">{{ labels().noResults }}</div>
               }
             } @else {
-              <div class="cmdk-empty">Searching…</div>
+              <div class="cmdk-empty">{{ labels().searching }}</div>
             }
           } @else {
             @if (visibleRecents().length > 0) {
               <div class="cmdk-group">
-                <div class="cmdk-group-label">Recent searches</div>
+                <div class="cmdk-group-label">{{ labels().recentSearchesGroup }}</div>
                 @for (
                   recent of visibleRecents();
                   track recent.providerKey + ':' + recent.resultId
@@ -125,12 +125,12 @@
               </div>
             } @empty {
               @if (visibleRecents().length === 0 && visibleFavourites().length === 0) {
-                <div class="cmdk-empty">No matching commands</div>
+                <div class="cmdk-empty">{{ labels().noMatchingCommands }}</div>
               }
             }
             @if (visibleFavourites().length > 0) {
               <div class="cmdk-group">
-                <div class="cmdk-group-label">Favourites</div>
+                <div class="cmdk-group-label">{{ labels().favouritesGroup }}</div>
                 @for (favourite of visibleFavourites(); track favourite.id) {
                   <div
                     [id]="'cmdk-item-favourite-' + favourite.id"
@@ -151,11 +151,11 @@
           }
         </div>
         <div class="cmdk-footer">
-          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">↑↓</span> Navigate</span>
-          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">↵</span> Select</span>
-          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">Esc</span> Close</span>
+          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">↑↓</span> {{ labels().footerNavigate }}</span>
+          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">↵</span> {{ labels().footerSelect }}</span>
+          <span class="cmdk-footer-hint"><span class="cmdk-footer-key">Esc</span> {{ labels().footerClose }}</span>
           @if (canOpenSettings()) {
-            <span class="cmdk-footer-hint"><span class="cmdk-footer-key">,</span> Settings</span>
+            <span class="cmdk-footer-hint"><span class="cmdk-footer-key">,</span> {{ labels().footerSettings }}</span>
           }
         </div>
       }

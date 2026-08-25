@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { resolveLabel, type ResolvedCommand } from '../command/command.model';
 import { CMDK_CONFIG } from '../config/cmdk-config';
+import { CmdkLabelsService } from '../config/cmdk-labels';
 import { CmdkIssueService } from '../issue/cmdk-issue';
 import { CommandRegistryService } from '../command/command-registry';
 import { FavouritesService, type FavouriteEntry } from '../favourites/favourites';
@@ -40,6 +41,7 @@ export class CmdkPaletteComponent {
   private readonly favourites = inject(FavouritesService);
   private readonly issues = inject(CmdkIssueService);
   private readonly config = inject(CMDK_CONFIG);
+  protected readonly labels = inject(CmdkLabelsService).labels;
   private readonly document = inject(DOCUMENT);
   private readonly isMac = isMacPlatform(this.document.defaultView?.navigator.platform ?? '');
   private readonly openShortcut = parseShortcut(this.config.shortcut, this.isMac);
@@ -146,7 +148,7 @@ export class CmdkPaletteComponent {
   });
 
   protected readonly searchInputLabel = computed(() =>
-    this.isSearchModeActive() ? 'Search' : 'Search commands',
+    this.isSearchModeActive() ? this.labels().searchPlaceholderActive : this.labels().searchPlaceholderDefault,
   );
 
   constructor() {

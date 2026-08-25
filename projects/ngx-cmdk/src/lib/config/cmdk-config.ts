@@ -1,5 +1,6 @@
 import { EnvironmentProviders, InjectionToken, makeEnvironmentProviders } from '@angular/core';
 import { hasExactlyOneKey, hasRequiredModifier, usesDigitKey } from '../shortcut/shortcut';
+import type { CmdkLabels } from './cmdk-labels';
 
 export interface CmdkConfig {
   shortcut: string;
@@ -7,6 +8,7 @@ export interface CmdkConfig {
   recentSearchesStorageKey?: () => string | null;
   favouritesStorageKey?: () => string | null;
   navigate?: (path: string) => void | Promise<void>;
+  labels?: () => Partial<CmdkLabels>;
 }
 
 export const DEFAULT_CMDK_CONFIG: CmdkConfig = { shortcut: 'mod+k', searchTimeoutMs: 5000 };
