@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RecentSearchesService } from './recent-searches';
 import { provideCmdk } from '../config/cmdk-config';
+import { CmdkIssueService } from '../issue/cmdk-issue';
 import type { SearchResult } from './search.model';
 
 function makeResult(overrides: Partial<SearchResult> = {}): SearchResult {
@@ -269,6 +270,57 @@ describe('RecentSearchesService', () => {
     } finally {
       Storage.prototype.getItem = originalGetItem;
       Storage.prototype.removeItem = originalRemoveItem;
+    }
+  });
+
+  it('reports a recent-searches-storage issue through CmdkIssueService when a storage read fails', () => {
+    const originalGetItem = Storage.prototype.getItem;
+    Storage.prototype.getItem = () => {
+      throw new DOMException('blocked', 'SecurityError');
+    };
+
+    try {
+      TestBed.configureTestingModule({
+        providers: [provideCmdk({ recentSearchesStorageKey: () => 'recents' })],
+      });
+      // Register the listener before injecting the service: the service's constructor
+      // synchronously attempts a storage read (and should already report the failure), so
+      // injecting it first would let that first report slip past an as-yet-unregistered listener.
+      const issues = TestBed.inject(CmdkIssueService);
+      const received: unknown[] = [];
+      issues.onIssue((issue) => received.push(issue));
+      TestBed.inject(RecentSearchesService);
+
+      expect(received).toEqual([
+        { source: 'recent-searches-storage', key: 'recents', error: expect.any(DOMException) },
+      ]);
+    } finally {
+      Storage.prototype.getItem = originalGetItem;
+    }
+  });
+
+  it('reports a recent-searches-storage issue through CmdkIssueService when a storage write fails', () => {
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => {
+      throw new DOMException('quota exceeded', 'QuotaExceededError');
+    };
+
+    try {
+      TestBed.configureTestingModule({
+        providers: [provideCmdk({ recentSearchesStorageKey: () => 'recents' })],
+      });
+      const service = TestBed.inject(RecentSearchesService);
+      const issues = TestBed.inject(CmdkIssueService);
+      const received: unknown[] = [];
+      issues.onIssue((issue) => received.push(issue));
+
+      service.record('fruits', makeResult({ resultId: 'apple' }));
+
+      expect(received).toEqual([
+        { source: 'recent-searches-storage', key: 'recents', error: expect.any(DOMException) },
+      ]);
+    } finally {
+      Storage.prototype.setItem = originalSetItem;
     }
   });
 });

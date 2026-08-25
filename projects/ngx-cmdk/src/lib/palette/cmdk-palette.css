@@ -122,7 +122,7 @@
   border-radius: 7px;
   background: var(--cmdk-accent, color-mix(in srgb, var(--cmdk-accent-color, #8b5cf6) 12%, transparent));
   color: var(--cmdk-accent-color, #8b5cf6);
-  font-family: 'Space Mono', monospace;
+  font-family: var(--cmdk-mono-font, 'Space Mono', monospace);
   font-size: 11px;
 }
 
@@ -169,7 +169,7 @@
   border-radius: 6px;
   padding: 3px 7px;
   font-size: 11px;
-  font-family: 'Space Mono', monospace;
+  font-family: var(--cmdk-mono-font, 'Space Mono', monospace);
   background: var(--cmdk-key-bg, oklch(0.95 0.008 50));
   color: var(--cmdk-key-fg, oklch(0.45 0.01 50));
   /* Shares labels().keyEscape with the footer's capitalized key badge; lowercased here purely
@@ -237,5 +237,5 @@
   background: var(--cmdk-key-bg, oklch(0.95 0.008 50));
   color: var(--cmdk-key-fg, oklch(0.45 0.01 50));
   font-size: 11px;
-  font-family: 'Space Mono', monospace;
+  font-family: var(--cmdk-mono-font, 'Space Mono', monospace);
 }

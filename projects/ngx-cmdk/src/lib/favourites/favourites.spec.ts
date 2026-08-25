@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FavouritesService } from './favourites';
 import { provideCmdk } from '../config/cmdk-config';
+import { CmdkIssueService } from '../issue/cmdk-issue';
 
 function setup(storageKey: () => string | null): FavouritesService {
   TestBed.configureTestingModule({
@@ -238,6 +239,53 @@ describe('FavouritesService', () => {
     } finally {
       Storage.prototype.getItem = originalGetItem;
       Storage.prototype.removeItem = originalRemoveItem;
+    }
+  });
+
+  it('reports a favourites-storage issue through CmdkIssueService when a storage read fails', () => {
+    const originalGetItem = Storage.prototype.getItem;
+    Storage.prototype.getItem = () => {
+      throw new DOMException('blocked', 'SecurityError');
+    };
+
+    try {
+      TestBed.configureTestingModule({
+        providers: [provideCmdk({ favouritesStorageKey: () => 'favs' })],
+      });
+      // Register the listener before injecting the service: the service's constructor
+      // synchronously attempts a storage read (and should already report the failure), so
+      // injecting it first would let that first report slip past an as-yet-unregistered listener.
+      const issues = TestBed.inject(CmdkIssueService);
+      const received: unknown[] = [];
+      issues.onIssue((issue) => received.push(issue));
+      TestBed.inject(FavouritesService);
+
+      expect(received).toEqual([{ source: 'favourites-storage', key: 'favs', error: expect.any(DOMException) }]);
+    } finally {
+      Storage.prototype.getItem = originalGetItem;
+    }
+  });
+
+  it('reports a favourites-storage issue through CmdkIssueService when a storage write fails', () => {
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => {
+      throw new DOMException('quota exceeded', 'QuotaExceededError');
+    };
+
+    try {
+      TestBed.configureTestingModule({
+        providers: [provideCmdk({ favouritesStorageKey: () => 'favs' })],
+      });
+      const service = TestBed.inject(FavouritesService);
+      const issues = TestBed.inject(CmdkIssueService);
+      const received: unknown[] = [];
+      issues.onIssue((issue) => received.push(issue));
+
+      service.add('Label', '/path');
+
+      expect(received).toEqual([{ source: 'favourites-storage', key: 'favs', error: expect.any(DOMException) }]);
+    } finally {
+      Storage.prototype.setItem = originalSetItem;
     }
   });
 

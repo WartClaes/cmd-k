@@ -138,5 +138,5 @@
   background: var(--cmdk-key-bg, oklch(0.95 0.008 50));
   color: var(--cmdk-key-fg, oklch(0.45 0.01 50));
   font-size: 11px;
-  font-family: 'Space Mono', monospace;
+  font-family: var(--cmdk-mono-font, 'Space Mono', monospace);
 }
