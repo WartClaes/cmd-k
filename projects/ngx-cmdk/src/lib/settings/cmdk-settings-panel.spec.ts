@@ -192,6 +192,33 @@ describe('CmdkSettingsPanelComponent', () => {
     expect(favouritesService.favourites().map((f) => f.label)).toEqual(['Second', 'First']);
   });
 
+  it('disables move-up for the first favourite and move-down for the last, leaving the middle enabled', () => {
+    setup({ favouritesStorageKey: () => 'favs' });
+    favouritesService.add('First', '/first');
+    favouritesService.add('Second', '/second');
+    favouritesService.add('Third', '/third');
+    fixture.detectChanges();
+
+    // Row order is [row1-up, row1-down, row2-up, row2-down, row3-up, row3-down].
+    const moveButtons = fixture.nativeElement.querySelectorAll('.cmdk-settings-move-button');
+    expect(moveButtons[0].disabled).toBe(true); // First: move-up
+    expect(moveButtons[1].disabled).toBe(false); // First: move-down
+    expect(moveButtons[2].disabled).toBe(false); // Second: move-up
+    expect(moveButtons[3].disabled).toBe(false); // Second: move-down
+    expect(moveButtons[4].disabled).toBe(false); // Third: move-up
+    expect(moveButtons[5].disabled).toBe(true); // Third: move-down
+  });
+
+  it('disables both move-up and move-down when there is only one favourite', () => {
+    setup({ favouritesStorageKey: () => 'favs' });
+    favouritesService.add('Only', '/only');
+    fixture.detectChanges();
+
+    const moveButtons = fixture.nativeElement.querySelectorAll('.cmdk-settings-move-button');
+    expect(moveButtons[0].disabled).toBe(true);
+    expect(moveButtons[1].disabled).toBe(true);
+  });
+
   it('clicking "Clear recent searches" clears RecentSearchesService', () => {
     setup({ recentSearchesStorageKey: () => 'recents' });
     recentSearches.record('fruits', { label: 'Apple', resultId: 'apple', execute: () => {} });
