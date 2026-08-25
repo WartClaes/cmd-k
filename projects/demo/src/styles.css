@@ -128,12 +128,6 @@ body {
   color: var(--demo-accent-2);
 }
 
-.doc-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 /*
  * ngx-cmdk never ships an icon system — Command.icon/SearchResult.icon are
  * consumer-defined CSS class tokens rendered on an empty <span>, and it's up
