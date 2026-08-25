@@ -89,11 +89,29 @@ class FavouritesService {
 }`;
 
   protected readonly labelsSnippet = `interface CmdkLabels {
-  dialogLabel: string;
-  searchPlaceholderDefault: string;
-  /* ...23 keys total... */
-  favouritesLimitReached: string;   // contains a %max% token
-  closeSettings: string;
+  dialogLabel: string;                 // "Command palette"
+  searchPlaceholderDefault: string;    // "Search commands"
+  searchPlaceholderActive: string;     // "Search"
+  noResults: string;                   // "No results"
+  searching: string;                   // "Searching…"
+  noMatchingCommands: string;          // "No matching commands"
+  recentSearchesGroup: string;         // "Recent searches" (palette group + settings section)
+  favouritesGroup: string;             // "Favourites" (palette group + settings section)
+  footerNavigate: string;              // "Navigate"
+  footerSelect: string;                // "Select"
+  footerClose: string;                 // "Close"
+  footerSettings: string;              // "Settings"
+  moveUp: string;                      // aria-label — "Move up"
+  moveDown: string;                    // aria-label — "Move down"
+  removeFavourite: string;             // aria-label — "Remove favourite"
+  addFavourite: string;                // aria-label — "Add favourite"
+  labelPlaceholder: string;            // input placeholder — "Label"
+  pathPlaceholder: string;             // input placeholder — "Path"
+  favouritesLimitReached: string;      // must contain a "%max%" token — "Maximum of %max% favourites reached — remove one to add another."
+  clearRecentSearches: string;         // "Clear recent searches"
+  recentSearchesCleared: string;       // "Recent searches cleared."
+  noRecentSearchesFound: string;       // "No recent searches found."
+  closeSettings: string;               // "CLOSE SETTINGS"
 }
 
 class CmdkLabelsService {
