@@ -1,0 +1,74 @@
+.doc-code-block {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid var(--demo-code-border);
+  background: var(--demo-code-bg);
+  overflow: hidden;
+}
+
+.doc-code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--demo-code-border);
+}
+
+.doc-code-block-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  color: var(--demo-text-muted);
+}
+
+.doc-code-block-copy {
+  border: none;
+  background: transparent;
+  color: var(--demo-text-muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.doc-code-block-copy:hover {
+  color: var(--demo-accent-2);
+}
+
+.doc-code-block-copy--floating {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 1;
+}
+
+.doc-code-block-body {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: 'Space Mono', monospace;
+  font-size: 13.5px;
+  white-space: pre;
+  line-height: 1.6;
+}
+
+.tok-comment {
+  color: var(--demo-code-comment);
+  font-style: italic;
+}
+
+.tok-string {
+  color: var(--demo-accent-2);
+}
+
+.tok-keyword {
+  color: var(--demo-accent);
+}
+
+.tok-type {
+  color: var(--demo-code-type);
+}
+
+.tok-base {
+  color: var(--demo-code-text);
+}
