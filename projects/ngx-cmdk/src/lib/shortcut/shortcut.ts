@@ -95,6 +95,16 @@ export function hasExactlyOneKey(shortcut: string): boolean {
   return keyTokens.length === 1 && /^[a-z]$/.test(keyTokens[0]);
 }
 
+/**
+ * The single non-modifier token in `shortcut`, if there is exactly one — regardless of whether
+ * it's a supported key. Used to distinguish "wrong number of keys" from "unsupported key format"
+ * when producing an error message for a rejected shortcut.
+ */
+export function singleKeyToken(shortcut: string): string | null {
+  const keyTokens = tokenize(shortcut).filter((token) => !ALL_MODIFIER_TOKENS.has(token));
+  return keyTokens.length === 1 ? keyTokens[0] : null;
+}
+
 export function usesDigitKey(shortcut: string): boolean {
   const keyTokens = tokenize(shortcut).filter((token) => !ALL_MODIFIER_TOKENS.has(token));
   return keyTokens.length === 1 && /^[0-9]$/.test(keyTokens[0]);

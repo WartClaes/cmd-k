@@ -7,7 +7,7 @@ export { resolveLabel } from './lib/command/command.model';
 export { CommandRegistryService } from './lib/command/command-registry';
 export { formatShortcut, isMacPlatform } from './lib/shortcut/shortcut';
 export type { ParsedShortcut } from './lib/shortcut/shortcut';
-export { provideCmdk } from './lib/config/cmdk-config';
+export { provideCmdk, CMDK_CONFIG, DEFAULT_CMDK_CONFIG } from './lib/config/cmdk-config';
 export type { CmdkConfig } from './lib/config/cmdk-config';
 export { CmdkLabelsService, DEFAULT_CMDK_LABELS } from './lib/config/cmdk-labels';
 export type { CmdkLabels } from './lib/config/cmdk-labels';

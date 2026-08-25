@@ -10,6 +10,7 @@ import {
   isMacPlatform,
   matchesShortcut,
   parseShortcut,
+  singleKeyToken,
   usesDigitKey,
   type ParsedShortcut,
 } from '../shortcut/shortcut';
@@ -51,6 +52,12 @@ export class CommandRegistryService {
         );
       }
       if (!hasExactlyOneKey(command.shortcut)) {
+        const singleKey = singleKeyToken(command.shortcut);
+        if (singleKey !== null && singleKey.length === 1) {
+          throw new Error(
+            `Shortcut "${command.shortcut}" uses an unsupported key "${singleKey}" — only single lowercase letters (a-z) are supported`,
+          );
+        }
         throw new Error(`Shortcut "${command.shortcut}" must have exactly one key in addition to its modifier(s)`);
       }
       parsedShortcut = parseShortcut(command.shortcut, this.isMac);

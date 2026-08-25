@@ -33,6 +33,9 @@ export class CmdkSettingsPanelComponent {
   protected readonly settingsRoot = viewChild<ElementRef<HTMLElement>>('settingsRoot');
   protected readonly newLabel = signal('');
   protected readonly newPath = signal('');
+  // Never reset back to false within a panel's lifetime — once the "cleared" confirmation
+  // message is shown, it stays shown for the rest of this panel instance. Reopening the panel
+  // (a fresh component instance) is what brings the button back.
   protected readonly justClearedRecentSearches = signal(false);
 
   protected readonly showFavouritesSection = computed(() => this.config.favouritesStorageKey?.() != null);

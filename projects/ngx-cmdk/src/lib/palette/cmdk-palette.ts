@@ -342,6 +342,10 @@ export class CmdkPaletteComponent {
     this.close();
   }
 
+  // Unlike runSearchResult/runFavourite, this never calls close() on failure: the entry's
+  // provider may no longer be registered, or the entry may point at content that no longer
+  // resolves, and forcing the palette shut would hide that from a user who can otherwise just
+  // try a different result.
   protected runRecentEntry(entry: RecentSearchEntry): void {
     const myGeneration = this.searchGeneration;
     const provider = this.searchRegistry.providers().find((p) => p.key === entry.providerKey);

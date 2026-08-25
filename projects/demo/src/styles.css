@@ -56,7 +56,6 @@
   --cmdk-key-bg: oklch(0.24 0.01 40);
   --cmdk-key-fg: oklch(0.68 0.01 50);
   --cmdk-accent: color-mix(in srgb, var(--cmdk-accent-color) 18%, transparent);
-  --cmdk-accent-color: #8b5cf6;
   --cmdk-backdrop: oklch(0.1 0.01 40 / 0.55);
 }
 
@@ -98,7 +97,7 @@ body {
 }
 
 /*
- * Shared across DemoActions, DemoNav, and the Activity log section in App —
+ * Shared across DemoActions, DemoNav, DemoSearch, and the Activity log section in App —
  * each of those templates lives behind Angular's emulated view encapsulation,
  * so a component-scoped rule can't be reused across them. This has to be global.
  */
