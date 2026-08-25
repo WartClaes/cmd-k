@@ -67,6 +67,36 @@ body {
 }
 
 /*
+ * highlight.js's hljs-* class names, styled against this app's own design tokens instead of
+ * one of highlight.js's bundled themes. These have to be global rather than living in
+ * DocCodeBlock's own stylesheet: the code content is inserted via [innerHTML] (highlight.js
+ * returns an HTML string, not Angular template markup), so it's never compiled by Angular and
+ * never receives the component's scoping attribute — a view-encapsulated rule simply can't
+ * match it. Everything not listed here (hljs-attr, hljs-property, hljs-params,
+ * hljs-title.function_, hljs-tag, punctuation) inherits --demo-code-text from
+ * .doc-code-block-body, matching the base token color the previous hand-rolled highlighter used.
+ */
+.hljs-comment {
+  color: var(--demo-code-comment);
+  font-style: italic;
+}
+
+.hljs-string,
+.hljs-number {
+  color: var(--demo-accent-2);
+}
+
+.hljs-keyword {
+  color: var(--demo-accent);
+}
+
+.hljs-title.class_,
+.hljs-built_in,
+.hljs-name {
+  color: var(--demo-code-type);
+}
+
+/*
  * Shared across DemoActions, DemoNav, and the Activity log section in App —
  * each of those templates lives behind Angular's emulated view encapsulation,
  * so a component-scoped rule can't be reused across them. This has to be global.

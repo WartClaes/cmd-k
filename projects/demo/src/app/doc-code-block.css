@@ -52,23 +52,8 @@
   line-height: 1.6;
 }
 
-.tok-comment {
-  color: var(--demo-code-comment);
-  font-style: italic;
-}
-
-.tok-string {
-  color: var(--demo-accent-2);
-}
-
-.tok-keyword {
-  color: var(--demo-accent);
-}
-
-.tok-type {
-  color: var(--demo-code-type);
-}
-
-.tok-base {
-  color: var(--demo-code-text);
-}
+/*
+ * highlight.js's hljs-* class names are styled globally, in styles.css — see the comment
+ * there for why (this component's own [innerHTML]-injected code content isn't reachable by
+ * a view-encapsulated component stylesheet).
+ */

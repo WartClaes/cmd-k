@@ -7,5 +7,5 @@
   } @else {
     <button type="button" class="doc-code-block-copy doc-code-block-copy--floating" (click)="copy()">{{ copied() ? 'copied' : 'copy' }}</button>
   }
-  <pre class="doc-code-block-body"><code>@for (tok of tokens(); track $index) {<span [class]="tok.className">{{ tok.text }}</span>}</code></pre>
+  <pre class="doc-code-block-body"><code [innerHTML]="highlightedHtml()"></code></pre>
 </div>
