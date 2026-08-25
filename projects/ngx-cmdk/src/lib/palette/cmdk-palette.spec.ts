@@ -988,6 +988,27 @@ describe('CmdkPaletteComponent', () => {
       localStorage.clear();
     });
 
+    it('hides favourites and recents once the query is non-empty, even when no search provider is registered', () => {
+      // isSearchModeActive() requires hasProviders() as well as a non-empty query, so with zero
+      // search providers registered it's always false regardless of what's typed — visibility
+      // must be driven by query emptiness directly, not routed through "is search mode active",
+      // or favourites/recents would incorrectly stay visible while the user fuzzy-searches
+      // Commands by typing, contradicting the documented "only in the empty-query, unscoped
+      // browse view" contract.
+      const navigate = vi.fn();
+      reconfigure({ favouritesStorageKey: () => 'favs', navigate });
+      favouritesService.add('Production orders', '/production-orders');
+      pressOpenShortcut();
+      expect(fixture.nativeElement.textContent).toContain('Production orders');
+
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+      input.value = 'unrelated query';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).not.toContain('Production orders');
+    });
+
     it('"," does nothing when neither favouritesStorageKey nor recentSearchesStorageKey is configured', () => {
       reconfigure({});
       pressOpenShortcut();
