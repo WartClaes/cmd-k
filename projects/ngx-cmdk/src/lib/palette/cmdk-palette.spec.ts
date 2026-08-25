@@ -1211,6 +1211,71 @@ describe('CmdkPaletteComponent', () => {
       expect(navigate).toHaveBeenCalledWith('/second');
     });
 
+    it('mod+1 still navigates a favourite while the Settings sub-view is open', () => {
+      const navigate = vi.fn();
+      reconfigure({ favouritesStorageKey: () => 'favs', navigate });
+      favouritesService.add('Production orders', '/production-orders');
+      pressOpenShortcut();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).not.toBeNull();
+
+      // Dispatch on the settings panel's own root, not .cmdk-panel directly, so this actually
+      // exercises CmdkSettingsPanelComponent's own keydown handler and its propagation decision,
+      // not just the palette's.
+      fixture.nativeElement
+        .querySelector('.cmdk-settings')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: '1', code: 'Digit1', metaKey: true, bubbles: true }));
+
+      expect(navigate).toHaveBeenCalledWith('/production-orders');
+    });
+
+    it('a registered command shortcut still fires while the Settings sub-view is open', () => {
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      const execute = vi.fn();
+      registry.register({ id: 'go', label: 'Go somewhere', shortcut: 'mod+j', execute });
+      pressOpenShortcut();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('ngx-cmdk-settings-panel')).not.toBeNull();
+
+      fixture.nativeElement
+        .querySelector('.cmdk-settings')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'j', code: 'KeyJ', metaKey: true, bubbles: true }));
+
+      expect(execute).toHaveBeenCalled();
+    });
+
+    it('Arrow/Enter/Backspace/Tab keys stay isolated to the Settings sub-view even with a modifier held', () => {
+      // These key names can never be part of a real registered shortcut (registration requires a
+      // single a-z letter or digit), but they ARE the palette's own reserved list-view keys —
+      // letting them bubble even with a modifier held would hijack list-view behavior (e.g.
+      // Enter trying to execute a stale selectedIndex) while the user is still inside Settings.
+      reconfigure({ favouritesStorageKey: () => 'favs' });
+      const execute = vi.fn();
+      registry.register({ id: 'a', label: 'A', execute });
+      pressOpenShortcut();
+      fixture.nativeElement
+        .querySelector('.cmdk-panel')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: ',', bubbles: true }));
+      fixture.detectChanges();
+
+      const outerHandler = vi.fn();
+      document.body.addEventListener('keydown', outerHandler);
+      try {
+        fixture.nativeElement
+          .querySelector('.cmdk-settings')
+          .dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, bubbles: true }));
+        expect(outerHandler).not.toHaveBeenCalled();
+      } finally {
+        document.body.removeEventListener('keydown', outerHandler);
+      }
+    });
+
     it('a rejected navigate() reports a favourite-navigate issue and does not crash', async () => {
       const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       const failure = new Error('network down');
