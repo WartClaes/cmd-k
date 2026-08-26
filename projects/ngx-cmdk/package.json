@@ -1,6 +1,28 @@
 {
   "name": "ngx-cmdk",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "description": "A Cmd/Ctrl+K style command palette for Angular, with search providers, favourites, recent searches, and translatable labels.",
+  "license": "MIT",
+  "author": "Wart Claes",
+  "homepage": "https://wartclaes.github.io/cmd-k/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WartClaes/cmd-k.git",
+    "directory": "projects/ngx-cmdk"
+  },
+  "bugs": {
+    "url": "https://github.com/WartClaes/cmd-k/issues"
+  },
+  "keywords": [
+    "angular",
+    "command-palette",
+    "cmdk",
+    "cmd-k",
+    "ngx",
+    "keyboard-shortcuts",
+    "search",
+    "quick-switcher"
+  ],
   "peerDependencies": {
     "@angular/common": "^22.0.0",
     "@angular/core": "^22.0.0"

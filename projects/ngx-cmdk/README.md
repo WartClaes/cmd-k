@@ -65,6 +65,13 @@ npx ng serve demo       # then serve the demo/docs app locally
 npx ng test ngx-cmdk    # run the library's unit tests
 ```
 
+## Publishing a release
+
+1. Bump `version` in `projects/ngx-cmdk/package.json`.
+2. Cut a [GitHub Release](https://github.com/WartClaes/cmd-k/releases) at that
+   version — `.github/workflows/publish-npm.yml` builds and publishes to npm
+   automatically via npm's Trusted Publisher (OIDC), no token required.
+
 ## License
 
 MIT
