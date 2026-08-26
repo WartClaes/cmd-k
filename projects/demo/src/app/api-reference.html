@@ -13,14 +13,11 @@
   <article>
     <h3>CommandRegistryService</h3>
     <p>
-      Injectable anywhere (<code>providedIn: 'root'</code>). Call
-      <code>register()</code> from any component, directive, guard, or
-      service — registration isn't confined to a single root location. It
-      returns an unregister function; pass it to
-      <code>DestroyRef.onDestroy()</code> for automatic cleanup.
-      Registering a duplicate <code>id</code> or a colliding
-      <code>shortcut</code> throws immediately, rather than silently
-      overriding the earlier registration.
+      Injectable anywhere (<code>providedIn: 'root'</code>).
+      <code>register()</code> returns an unregister function — pass it to
+      <code>DestroyRef.onDestroy()</code> for cleanup. A duplicate
+      <code>id</code> or colliding <code>shortcut</code> throws immediately
+      rather than silently overriding the earlier registration.
     </p>
     <app-doc-code-block [code]="registrySnippet" />
   </article>
@@ -38,15 +35,12 @@
   <article>
     <h3>Icons</h3>
     <p>
-      Both <code>Command.icon</code> and <code>SearchResult.icon</code>
-      render the same way: as an extra CSS class on an otherwise-empty
+      <code>Command.icon</code> and <code>SearchResult.icon</code> both
+      render as an extra class on an otherwise-empty
       <code>&lt;span class="cmdk-item-icon"&gt;</code>. ngx-cmdk ships no
-      icon system of its own — your app's global stylesheet decides what
-      that class actually looks like (an icon-font <code>::before</code>
-      glyph, a <code>background-image</code>, a masked SVG, whatever you
-      already use), the same "bring your own styling" approach as the
-      <code>--cmdk-*</code> custom properties elsewhere in this library.
-      Leave <code>icon</code> unset and nothing extra renders.
+      icon system — your global stylesheet decides what that class looks
+      like (icon-font, <code>background-image</code>, masked SVG, whatever
+      you already use). Leave <code>icon</code> unset and nothing renders.
     </p>
   </article>
 
@@ -62,68 +56,53 @@
   <article>
     <h3>Search providers</h3>
     <p>
-      A second registration surface, alongside commands. Call
-      <code>SearchRegistryService.register()</code> from anywhere to
-      attach an async data source to the palette — typing fans the query
-      out to every registered provider and merges the results into a
-      single flat list. With zero providers registered, typing behaves
-      exactly as it always has: Commands keep fuzzy-matching.
+      A second registration surface, alongside commands.
+      <code>SearchRegistryService.register()</code> attaches an async data
+      source — typing fans the query out to every registered provider and
+      merges the results into one flat list. With zero providers
+      registered, Commands keep fuzzy-matching as before.
     </p>
     <app-doc-code-block [code]="searchProviderSnippet" />
     <app-doc-code-block [code]="searchRegistrySnippet" />
-    <p>
-      A provider that's still running when <code>searchTimeoutMs</code>
-      (default 5000ms, configurable via <code>provideCmdk()</code>)
-      elapses contributes no results for that query — it doesn't block
-      the others. Typing is already debounced (200ms) before
-      <code>search()</code> is ever called, so a provider doesn't need
-      its own debounce logic.
-    </p>
-    <p>
-      In practice, a provider is registered from whichever component owns
-      the data it searches — often in the constructor, unregistered on
-      destroy the same way a <code>Command</code> is:
-    </p>
+    <ul>
+      <li>Typing is already debounced (200ms) before <code>search()</code> runs — no need for your own debounce.</li>
+      <li>A provider still running when <code>searchTimeoutMs</code> (default 5000ms) elapses contributes no results for that query, without blocking the others.</li>
+    </ul>
+    <p>Registered from whichever component owns the data, typically in the constructor, and unregistered on destroy the same way a <code>Command</code> is:</p>
     <app-doc-code-block [code]="searchProviderExampleSnippet" />
   </article>
 
   <article>
     <h3>Scoping a search</h3>
     <p>
-      With one or more providers registered, typing a provider's
-      <code>key</code> followed by <code>:</code> (e.g.
-      <code>"fruits:"</code>) converts it into a scope token — only that
-      provider is queried until the token is removed with Backspace. The
-      same scoping is also available by clicking a category chip below
-      the search input.
+      Type a provider's <code>key</code> followed by <code>:</code> (e.g.
+      <code>"fruits:"</code>), or click its category chip below the search
+      input, to scope the search to just that provider until the token is
+      removed with Backspace.
     </p>
   </article>
 
   <article>
     <h3>Recent searches</h3>
     <p>
-      Opt-in and fully hard-gated: with no <code>recentSearchesStorageKey</code>
-      configured, nothing is tracked, persisted, or rendered — zero behavior
-      change. Configure it and every search-result selection (not Commands)
-      is remembered to <code>localStorage</code> under the key your callback
-      returns, and reappears in a "Recent searches" section above Commands
-      the next time the palette opens with an empty, unscoped query — even
-      after a reload. The key is a plain callback, not a static string, so a
-      host app can scope it per signed-in user (e.g.
+      Opt-in and hard-gated: with no <code>recentSearchesStorageKey</code>
+      configured, nothing is tracked, persisted, or rendered. Configure it
+      and every search-result selection (not Commands) is saved to
+      <code>localStorage</code> under your callback's key, reappearing above
+      Commands next time the palette opens with an empty, unscoped query.
+    </p>
+    <p>
+      The key is a callback, not a static string, so a host app can scope
+      it per signed-in user (e.g.
       <code>() =&gt; userId() ? 'myapp-recents-' + userId() : null</code>) to
       avoid leaking one account's history to another on a shared device.
     </p>
-    <p>
-      A result only becomes a persistable recent if its provider sets
-      <code>resultId</code>; selecting a persisted recent from a previous
-      session calls that provider's <code>resolve(resultId)</code> to
-      reconstruct a fresh, live result (never called just to list recents —
-      only when one is actually picked). If the provider that produced a
-      recent isn't currently registered, that entry is hidden from the list
-      but left untouched in storage — it reappears once the provider
-      registers again. If <code>resolve()</code> fails or returns
-      <code>null</code>, the entry is confirmed gone and removed for real.
-    </p>
+    <ul>
+      <li>A result becomes a persistable recent only if its provider sets <code>resultId</code>.</li>
+      <li>Picking a recent from a previous session calls its provider's <code>resolve(resultId)</code> to reconstruct a fresh result — never called just to list recents.</li>
+      <li>If that provider isn't currently registered, the entry is hidden but kept in storage, reappearing once the provider registers again.</li>
+      <li>If <code>resolve()</code> fails or returns <code>null</code>, the entry is removed for real.</li>
+    </ul>
     <app-doc-code-block [code]="recentSearchesSnippet" />
   </article>
 
@@ -131,32 +110,27 @@
     <h3>Favourites &amp; Settings</h3>
     <p>
       Opt-in and hard-gated like Recent Searches: with no
-      <code>favouritesStorageKey</code> configured, Favourites track
-      nothing and never render. A favourite is a plain
-      <code>{{ '{' }} label, path {{ '}' }}</code> pair the end user types in
-      themselves — not a registered <code>Command</code> — persisted to
-      <code>localStorage</code> and selected via a
-      <code>navigate: (path) =&gt; void | Promise&lt;void&gt;</code>
+      <code>favouritesStorageKey</code> configured, nothing tracks or
+      renders. A favourite is a plain
+      <code>{{ '{' }} label, path {{ '}' }}</code> pair the end user types
+      in themselves — persisted to <code>localStorage</code> and selected
+      via a <code>navigate: (path) =&gt; void | Promise&lt;void&gt;</code>
       callback you supply, so this library never imports
-      <code>@angular/router</code> itself.
+      <code>@angular/router</code>.
     </p>
     <p>
-      Favourites appear below Actions in the same empty-query, unscoped
-      browse view Recent Searches uses. Each favourite's position assigns
-      its shortcut — the 1st is <code>mod+1</code>, up to the 9th at
-      <code>mod+9</code> — which is why the list is capped at 9 and why
-      Command shortcuts can no longer use a digit key at all, with or
-      without a modifier: the digit namespace is reserved for favourites
-      everywhere in this library.
+      Favourites appear below Actions in the same browse view Recent
+      Searches uses. Each one's position assigns its shortcut —
+      <code>mod+1</code> through <code>mod+9</code> — which is why the
+      list caps at 9, and why the digit namespace is reserved for
+      favourites everywhere in this library, including Commands.
     </p>
     <p>
       Press <code>,</code> with an empty, unscoped query to open
-      Settings — a second view inside the same palette, not a separate
-      component to mount — where favourites are added, removed, and
-      reordered, and where a "Clear recent searches" action lives if
-      <code>recentSearchesStorageKey</code> is configured. Settings
-      itself is reachable only when at least one of those two keys is
-      set; with neither configured, <code>,</code> does nothing.
+      Settings — a second view in the same palette — where favourites are
+      added, removed, and reordered, and a "Clear recent searches" action
+      lives if that's configured. Settings is reachable only when at
+      least one storage key is set.
     </p>
     <app-doc-code-block [code]="favouritesSnippet" />
   </article>
@@ -164,22 +138,18 @@
   <article>
     <h3>Translatable labels</h3>
     <p>
-      Every piece of UI text the palette and Settings render — dialog and
-      input <code>aria-label</code>s, group headings, footer hints, button
-      labels, placeholders, and messages — comes from
-      <code>CmdkLabels</code>. The <code>labels</code> option is optional
-      and defaults entirely to English (<code>DEFAULT_CMDK_LABELS</code>);
-      a partial override you provide is merged over those defaults, so any
-      key you don't set keeps its English text.
+      Every piece of UI text the palette and Settings render comes from
+      <code>CmdkLabels</code>, optional and defaulting entirely to English
+      (<code>DEFAULT_CMDK_LABELS</code>). A partial override merges over
+      those defaults, so any key you don't set keeps its English text.
     </p>
     <p>
-      Like <code>favouritesStorageKey</code> and
-      <code>recentSearchesStorageKey</code>, <code>labels</code> is a
-      callback rather than a static object — read a locale signal inside
-      it and the palette's text switches live whenever that signal
-      changes, no remount required. <code>favouritesLimitReached</code> is
-      the one label containing a <code>%max%</code> token, which is
-      substituted with the actual favourites cap before it's rendered.
+      Like the storage-key options, <code>labels</code> is a callback, not
+      a static object — read a locale signal inside it and the palette's
+      text switches live, no remount required.
+      <code>favouritesLimitReached</code> is the one label with a
+      <code>%max%</code> token, substituted with the actual favourites cap
+      before it's rendered.
     </p>
     <app-doc-code-block [code]="labelsSnippet" />
   </article>
@@ -187,11 +157,11 @@
   <article>
     <h3>CmdkIssueService</h3>
     <p>
-      Every error this library catches on your behalf — a failing
-      command, a failing or slow search provider, a failing search result
-      — is logged via <code>console.error</code>/<code>console.warn</code>
-      and also reported through this service, so you can build your own
-      UI on top instead of the library imposing one.
+      Every error this library catches — a failing command, a failing or
+      slow search provider, a failing search result — is logged via
+      <code>console.error</code>/<code>console.warn</code> and reported
+      through this service, so you can build your own UI on top instead
+      of the library imposing one.
     </p>
     <app-doc-code-block [code]="cmdkIssueSnippet" />
   </article>
@@ -199,30 +169,10 @@
   <article>
     <h3>Shortcut rules</h3>
     <ul>
-      <li>
-        <code>mod</code> is a platform alias — ⌘ on Mac, Ctrl on
-        Windows/Linux — so you don't need to branch on platform.
-      </li>
-      <li>
-        Every shortcut needs a real modifier (<code>mod</code>,
-        <code>ctrl</code>, <code>alt</code>, or <code>cmd</code>/
-        <code>meta</code>) plus exactly one key — a single letter (a-z),
-        e.g. <code>"mod+s"</code> or <code>"mod+shift+p"</code>. A bare
-        key, a shift-only combo, a digit key, or a key that isn't a
-        single letter is rejected at registration time — digits are
-        reserved for favourite shortcuts (<code>mod+1</code> through
-        <code>mod+9</code>).
-      </li>
-      <li>
-        A command's shortcut only fires while the palette is open — press
-        it, and that command runs immediately, the same as selecting it and
-        pressing Enter. The one shortcut that's always live, even when the
-        palette is closed, is the configured open-shortcut itself.
-      </li>
-      <li>
-        Shortcut hints render with the correct symbol for your OS — ⌘ on
-        Mac, Ctrl elsewhere — automatically.
-      </li>
+      <li><code>mod</code> is a platform alias — ⌘ on Mac, Ctrl on Windows/Linux — so you don't need to branch on platform.</li>
+      <li>Needs a real modifier (<code>mod</code>, <code>ctrl</code>, <code>alt</code>, or <code>cmd</code>/<code>meta</code>) plus exactly one letter (a-z), e.g. <code>"mod+s"</code>. A bare key, shift-only combo, digit key, or non-letter key is rejected at registration — digits are reserved for favourites (<code>mod+1</code> through <code>mod+9</code>).</li>
+      <li>A command's shortcut only fires while the palette is open. The one always-live shortcut, even when closed, is the configured open-shortcut itself.</li>
+      <li>Shortcut hints render with the correct symbol for your OS automatically.</li>
     </ul>
   </article>
 </section>
