@@ -75,8 +75,16 @@
       A provider that's still running when <code>searchTimeoutMs</code>
       (default 5000ms, configurable via <code>provideCmdk()</code>)
       elapses contributes no results for that query — it doesn't block
-      the others.
+      the others. Typing is already debounced (200ms) before
+      <code>search()</code> is ever called, so a provider doesn't need
+      its own debounce logic.
     </p>
+    <p>
+      In practice, a provider is registered from whichever component owns
+      the data it searches — often in the constructor, unregistered on
+      destroy the same way a <code>Command</code> is:
+    </p>
+    <app-doc-code-block [code]="searchProviderExampleSnippet" />
   </article>
 
   <article>

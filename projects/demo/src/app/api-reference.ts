@@ -51,6 +51,46 @@ interface SearchProvider {
   search(query: string, scopeKey?: string): Promise<SearchResult[]>;
 }`;
 
+  protected readonly searchProviderExampleSnippet = `@Component({ selector: 'app-product-search' /* ... */ })
+export class ProductSearch {
+  private readonly api = inject(ProductApi);       // however you already fetch product data
+  private readonly router = inject(Router);        // however you already navigate
+
+  constructor() {
+    const registry = inject(SearchRegistryService);
+
+    const unregister = registry.register({
+      key: 'products',      // unique across every registered provider — also the "products:" scope prefix
+      label: 'Products',    // chip text shown above the search input
+      search: async (query) => {
+        const products = await this.api.search(query);
+        return products.map((product) => this.toResult(product));
+      },
+      // Reconstructs a result from a persisted "recent search" entry — only needed if
+      // recentSearchesStorageKey is configured. Given just the resultId you handed back
+      // below, look the item up again and return the same shape, or null if it's gone.
+      resolve: async (resultId) => {
+        const product = await this.api.getById(resultId);
+        return product ? this.toResult(product) : null;
+      },
+    });
+
+    // Same DestroyRef pattern as CommandRegistryService.register() — a provider left
+    // registered after its component is gone keeps searching, and its resultIds can
+    // still turn up in "recent searches" pointing at nothing this component can resolve.
+    inject(DestroyRef).onDestroy(unregister);
+  }
+
+  private toResult(product: Product): SearchResult {
+    return {
+      label: product.name,
+      subtitle: \`/products/\${product.id}\`,
+      resultId: product.id,   // persisted as-is to localStorage — keep it stable and cheap to look up
+      execute: () => this.router.navigateByUrl(\`/products/\${product.id}\`),
+    };
+  }
+}`;
+
   protected readonly recentSearchesSnippet = `function provideCmdk(config?: {
   shortcut?: string;
   searchTimeoutMs?: number;
