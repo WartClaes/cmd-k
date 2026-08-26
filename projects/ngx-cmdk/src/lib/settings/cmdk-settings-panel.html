@@ -45,6 +45,7 @@
             [placeholder]="labels().labelPlaceholder"
             [value]="newLabel()"
             (input)="newLabel.set($any($event.target).value)"
+            (keydown.enter)="submitAdd()"
           />
           <input
             class="cmdk-settings-input"

@@ -90,11 +90,15 @@ export class CmdkPaletteComponent {
   // regardless of what's typed — routing visibility through it would incorrectly keep
   // favourites/recents visible while the user fuzzy-searches Commands by typing, contradicting
   // the documented "only in the empty-query, unscoped browse view" contract.
+  // Kept as its own computed (rather than built inline in visibleRecents) so it only recomputes
+  // when the set of registered providers actually changes, not on every query keystroke.
+  private readonly registeredProviderKeys = computed(() => new Set(this.searchRegistry.providers().map((p) => p.key)));
+
   protected readonly visibleRecents = computed(() => {
     if (this.query().trim().length > 0 || this.scopedProviderKey() !== null) {
       return [] as readonly RecentSearchEntry[];
     }
-    const registeredKeys = new Set(this.searchRegistry.providers().map((p) => p.key));
+    const registeredKeys = this.registeredProviderKeys();
     return this.recentSearches.recent().filter((entry) => registeredKeys.has(entry.providerKey));
   });
 

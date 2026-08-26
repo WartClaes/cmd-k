@@ -142,6 +142,21 @@ describe('CmdkSettingsPanelComponent', () => {
     expect(favouritesService.favourites().map((f) => f.label)).toEqual(['New favourite']);
   });
 
+  it('pressing Enter in the Label input submits the add form', () => {
+    setup({ favouritesStorageKey: () => 'favs' });
+    const [labelInput, pathInput] = fixture.nativeElement.querySelectorAll('.cmdk-settings-add-row .cmdk-settings-input');
+    labelInput.value = 'New favourite';
+    labelInput.dispatchEvent(new Event('input'));
+    pathInput.value = '/new';
+    pathInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    labelInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(favouritesService.favourites().map((f) => f.label)).toEqual(['New favourite']);
+  });
+
   it('replaces the add row with a limit message once 9 favourites exist', () => {
     setup({ favouritesStorageKey: () => 'favs' });
     for (let i = 0; i < 9; i++) {
