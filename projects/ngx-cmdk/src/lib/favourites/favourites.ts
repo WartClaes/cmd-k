@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, effect, inject, signal } from '@angular/core';
 import { CMDK_CONFIG } from '../config/cmdk-config';
 import { CmdkIssueService } from '../issue/cmdk-issue';
+import { generateId } from '../shared/generate-id';
 
 export interface FavouriteEntry {
   id: string;
@@ -10,17 +11,6 @@ export interface FavouriteEntry {
 }
 
 export const MAX_FAVOURITE_ENTRIES = 9;
-
-function generateId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    try {
-      return crypto.randomUUID();
-    } catch {
-      // crypto.randomUUID() is restricted to secure contexts; fall back below.
-    }
-  }
-  return `cmdk-fav-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-}
 
 @Injectable({ providedIn: 'root' })
 export class FavouritesService {
@@ -62,7 +52,7 @@ export class FavouritesService {
       return;
     }
 
-    const next = [...this.entriesSignal(), { id: generateId(), label: trimmedLabel, path: trimmedPath }];
+    const next = [...this.entriesSignal(), { id: generateId('cmdk-fav-'), label: trimmedLabel, path: trimmedPath }];
     this.entriesSignal.set(next);
     this.writeToStorage(key, next);
   }

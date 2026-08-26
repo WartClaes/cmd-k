@@ -3,29 +3,20 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import type { Command, ResolvedCommand } from './command.model';
 import { CMDK_CONFIG } from '../config/cmdk-config';
 import { CmdkIssueService } from '../issue/cmdk-issue';
+import { generateId } from '../shared/generate-id';
 import {
   hasExactlyOneKey,
   hasRequiredModifier,
   isMacPlatform,
   matchesShortcut,
   parseShortcut,
+  singleKeyToken,
   usesDigitKey,
   type ParsedShortcut,
 } from '../shortcut/shortcut';
 
 function canonicalShortcutKey(parsed: ParsedShortcut): string {
   return `${parsed.ctrl}|${parsed.meta}|${parsed.alt}|${parsed.shift}|${parsed.key}`;
-}
-
-function generateId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    try {
-      return crypto.randomUUID();
-    } catch {
-      // crypto.randomUUID() is restricted to secure contexts; fall back below.
-    }
-  }
-  return `cmdk-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -44,7 +35,7 @@ export class CommandRegistryService {
   );
 
   register(command: Command): () => void {
-    const id = command.id ?? generateId();
+    const id = command.id ?? generateId('cmdk-');
     if (this.commandsMap().has(id)) {
       throw new Error(`Command with id "${id}" is already registered`);
     }
@@ -61,6 +52,12 @@ export class CommandRegistryService {
         );
       }
       if (!hasExactlyOneKey(command.shortcut)) {
+        const singleKey = singleKeyToken(command.shortcut);
+        if (singleKey !== null && singleKey.length === 1) {
+          throw new Error(
+            `Shortcut "${command.shortcut}" uses an unsupported key "${singleKey}" — only single lowercase letters (a-z) are supported`,
+          );
+        }
         throw new Error(`Shortcut "${command.shortcut}" must have exactly one key in addition to its modifier(s)`);
       }
       parsedShortcut = parseShortcut(command.shortcut, this.isMac);

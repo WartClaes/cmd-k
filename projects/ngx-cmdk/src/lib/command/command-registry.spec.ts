@@ -101,6 +101,12 @@ describe('CommandRegistryService', () => {
     );
   });
 
+  it('throws a specific message when registering a shortcut with an unsupported single-character key (e.g. punctuation)', () => {
+    expect(() => service.register(makeCommand({ id: 'search', shortcut: 'mod+;' }))).toThrow(
+      'Shortcut "mod+;" uses an unsupported key ";" — only single lowercase letters (a-z) are supported',
+    );
+  });
+
   it('throws when registering a shortcut with a digit key', () => {
     expect(() => service.register(makeCommand({ id: 'search', shortcut: 'mod+1' }))).toThrow(
       'Shortcut "mod+1" cannot use a digit key — digits are reserved for favourite shortcuts (mod+1 through mod+9)',

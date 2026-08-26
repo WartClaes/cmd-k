@@ -318,6 +318,24 @@ describe('CmdkPaletteComponent', () => {
     expect(fixture.nativeElement.querySelector('.cmdk-scope-token')).not.toBeNull();
   });
 
+  it('automatically clears the scope token if its provider unregisters while scoped', () => {
+    const searchRegistry = TestBed.inject(SearchRegistryService);
+    const unregister = searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });
+    searchRegistry.register({ key: 'veggies', label: 'veggies', search: async () => [] });
+    pressOpenShortcut();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('.cmdk-input');
+    input.value = 'fruits:';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cmdk-scope-token')).not.toBeNull();
+
+    unregister();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.cmdk-scope-token')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.cmdk-chip-row')).not.toBeNull();
+  });
+
   it('resets scope on reopen', () => {
     const searchRegistry = TestBed.inject(SearchRegistryService);
     searchRegistry.register({ key: 'fruits', label: 'fruits', search: async () => [] });

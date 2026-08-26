@@ -1,4 +1,12 @@
-import { formatShortcut, isMacPlatform, MAX_FAVOURITE_ENTRIES, resolveLabel, type ParsedShortcut } from './public-api';
+import {
+  CMDK_CONFIG,
+  DEFAULT_CMDK_CONFIG,
+  formatShortcut,
+  isMacPlatform,
+  MAX_FAVOURITE_ENTRIES,
+  resolveLabel,
+  type ParsedShortcut,
+} from './public-api';
 
 describe('public-api', () => {
   it('exports formatShortcut, usable to render a shortcut hint outside the library-internal components', () => {
@@ -23,5 +31,13 @@ describe('public-api', () => {
   it('exports the ParsedShortcut type, usable to type a value produced elsewhere', () => {
     const parsed: ParsedShortcut = { key: 'k', ctrl: false, meta: true, alt: false, shift: false, hasModifier: true };
     expect(parsed.key).toBe('k');
+  });
+
+  it('exports DEFAULT_CMDK_CONFIG, the config used when provideCmdk() is omitted', () => {
+    expect(DEFAULT_CMDK_CONFIG).toEqual({ shortcut: 'mod+k', searchTimeoutMs: 5000 });
+  });
+
+  it('exports CMDK_CONFIG, the injection token consumers can use to read the resolved config', () => {
+    expect(CMDK_CONFIG).toBeTruthy();
   });
 });

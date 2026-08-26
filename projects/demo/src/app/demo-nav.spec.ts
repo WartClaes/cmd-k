@@ -12,4 +12,14 @@ describe('DemoNav', () => {
     commandA?.execute();
     expect(fixture.componentInstance['activeSection']()).toBe('A');
   });
+
+  it('unregisters its commands when destroyed', () => {
+    TestBed.configureTestingModule({ imports: [DemoNav] });
+    const registry = TestBed.inject(CommandRegistryService);
+    const fixture = TestBed.createComponent(DemoNav);
+    fixture.detectChanges();
+    fixture.destroy();
+    const ids = registry.commands().map((c) => c.id);
+    expect(ids).not.toEqual(expect.arrayContaining(['demo-go-section-a', 'demo-go-section-b']));
+  });
 });

@@ -9,7 +9,10 @@ async function searchWithTimeout(
   timeoutMs: number,
   issues: CmdkIssueService,
 ): Promise<SearchResult[]> {
-  const timeout = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), timeoutMs));
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<'timeout'>((resolve) => {
+    timeoutId = setTimeout(() => resolve('timeout'), timeoutMs);
+  });
   try {
     const outcome = await Promise.race([provider.search(query), timeout]);
     if (outcome === 'timeout') {
@@ -22,6 +25,8 @@ async function searchWithTimeout(
     console.warn(`Search provider "${provider.key}" failed:`, error);
     issues.report({ source: 'search-provider', key: provider.key, query, reason: 'error', error });
     return [];
+  } finally {
+    clearTimeout(timeoutId!);
   }
 }
 
@@ -58,6 +63,11 @@ export class SearchRegistryService {
   async search(query: string, scopeKey?: string): Promise<SearchResult[]> {
     const all = this.providers();
     const targets = scopeKey ? all.filter((provider) => provider.key === scopeKey) : all;
+    if (scopeKey && targets.length === 0) {
+      console.warn(`Search scope "${scopeKey}" matches no registered provider`);
+      this.issues.report({ source: 'search-scope', scopeKey, query });
+      return [];
+    }
     const resultsPerProvider = await Promise.all(
       targets.map(async (provider) => {
         const results = await searchWithTimeout(provider, query, this.config.searchTimeoutMs, this.issues);
