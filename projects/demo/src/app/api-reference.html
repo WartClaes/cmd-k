@@ -13,11 +13,9 @@
   <article>
     <h3>CommandRegistryService</h3>
     <p>
-      Injectable anywhere (<code>providedIn: 'root'</code>).
-      <code>register()</code> returns an unregister function — pass it to
-      <code>DestroyRef.onDestroy()</code> for cleanup. A duplicate
-      <code>id</code> or colliding <code>shortcut</code> throws immediately
-      rather than silently overriding the earlier registration.
+      Injectable anywhere. Registering a duplicate <code>id</code> or
+      colliding <code>shortcut</code> throws immediately, rather than
+      silently overriding the earlier registration.
     </p>
     <app-doc-code-block [code]="registrySnippet" />
   </article>
@@ -25,10 +23,9 @@
   <article>
     <h3>CmdkPaletteComponent</h3>
     <p>
-      Selector <code>ngx-cmdk-palette</code>. Mount it once, typically in
-      your root component's template. It reads live from
-      <code>CommandRegistryService</code>, so it reflects whatever is
-      currently registered with no extra wiring.
+      Selector <code>ngx-cmdk-palette</code>. Mount once in your root
+      template — it reads live from <code>CommandRegistryService</code>,
+      no extra wiring needed.
     </p>
   </article>
 
@@ -36,11 +33,10 @@
     <h3>Icons</h3>
     <p>
       <code>Command.icon</code> and <code>SearchResult.icon</code> both
-      render as an extra class on an otherwise-empty
-      <code>&lt;span class="cmdk-item-icon"&gt;</code>. ngx-cmdk ships no
-      icon system — your global stylesheet decides what that class looks
-      like (icon-font, <code>background-image</code>, masked SVG, whatever
-      you already use). Leave <code>icon</code> unset and nothing renders.
+      render as an extra class on an empty
+      <code>&lt;span class="cmdk-item-icon"&gt;</code> — ngx-cmdk ships no
+      icon system, your stylesheet decides what it looks like. Leave
+      <code>icon</code> unset and nothing renders.
     </p>
   </article>
 
@@ -56,19 +52,14 @@
   <article>
     <h3>Search providers</h3>
     <p>
-      A second registration surface, alongside commands.
-      <code>SearchRegistryService.register()</code> attaches an async data
-      source — typing fans the query out to every registered provider and
-      merges the results into one flat list. With zero providers
-      registered, Commands keep fuzzy-matching as before.
+      A second registration surface, alongside commands — attaches an
+      async data source; typing fans out to every registered provider and
+      merges the results. With zero providers registered, Commands keep
+      fuzzy-matching as before.
     </p>
     <app-doc-code-block [code]="searchProviderSnippet" />
     <app-doc-code-block [code]="searchRegistrySnippet" />
-    <ul>
-      <li>Typing is already debounced (200ms) before <code>search()</code> runs — no need for your own debounce.</li>
-      <li>A provider still running when <code>searchTimeoutMs</code> (default 5000ms) elapses contributes no results for that query, without blocking the others.</li>
-    </ul>
-    <p>Registered from whichever component owns the data, typically in the constructor, and unregistered on destroy the same way a <code>Command</code> is:</p>
+    <p>Registered from whichever component owns the data, unregistered on destroy the same way a <code>Command</code> is:</p>
     <app-doc-code-block [code]="searchProviderExampleSnippet" />
   </article>
 
@@ -76,32 +67,22 @@
     <h3>Scoping a search</h3>
     <p>
       Type a provider's <code>key</code> followed by <code>:</code> (e.g.
-      <code>"fruits:"</code>), or click its category chip below the search
-      input, to scope the search to just that provider until the token is
-      removed with Backspace.
+      <code>"fruits:"</code>), or click its chip, to scope search to just
+      that provider — remove with Backspace.
     </p>
   </article>
 
   <article>
     <h3>Recent searches</h3>
     <p>
-      Opt-in and hard-gated: with no <code>recentSearchesStorageKey</code>
-      configured, nothing is tracked, persisted, or rendered. Configure it
-      and every search-result selection (not Commands) is saved to
-      <code>localStorage</code> under your callback's key, reappearing above
-      Commands next time the palette opens with an empty, unscoped query.
-    </p>
-    <p>
-      The key is a callback, not a static string, so a host app can scope
-      it per signed-in user (e.g.
-      <code>() =&gt; userId() ? 'myapp-recents-' + userId() : null</code>) to
-      avoid leaking one account's history to another on a shared device.
+      Opt-in and hard-gated — unset, nothing is tracked. Configured, every
+      search-result selection (not Commands) is saved to
+      <code>localStorage</code> and reappears above Commands next time the
+      palette opens with an empty, unscoped query.
     </p>
     <ul>
-      <li>A result becomes a persistable recent only if its provider sets <code>resultId</code>.</li>
-      <li>Picking a recent from a previous session calls its provider's <code>resolve(resultId)</code> to reconstruct a fresh result — never called just to list recents.</li>
-      <li>If that provider isn't currently registered, the entry is hidden but kept in storage, reappearing once the provider registers again.</li>
-      <li>If <code>resolve()</code> fails or returns <code>null</code>, the entry is removed for real.</li>
+      <li>Hidden (not deleted) if its provider isn't currently registered — reappears once it re-registers.</li>
+      <li>Removed for real if <code>resolve()</code> fails or returns <code>null</code>.</li>
     </ul>
     <app-doc-code-block [code]="recentSearchesSnippet" />
   </article>
@@ -109,28 +90,17 @@
   <article>
     <h3>Favourites &amp; Settings</h3>
     <p>
-      Opt-in and hard-gated like Recent Searches: with no
-      <code>favouritesStorageKey</code> configured, nothing tracks or
-      renders. A favourite is a plain
+      Opt-in and hard-gated like Recent Searches. A favourite is a plain
       <code>{{ '{' }} label, path {{ '}' }}</code> pair the end user types
-      in themselves — persisted to <code>localStorage</code> and selected
-      via a <code>navigate: (path) =&gt; void | Promise&lt;void&gt;</code>
-      callback you supply, so this library never imports
-      <code>@angular/router</code>.
-    </p>
-    <p>
-      Favourites appear below Actions in the same browse view Recent
-      Searches uses. Each one's position assigns its shortcut —
-      <code>mod+1</code> through <code>mod+9</code> — which is why the
-      list caps at 9, and why the digit namespace is reserved for
-      favourites everywhere in this library, including Commands.
+      in themselves — persisted to <code>localStorage</code>, selected via
+      a <code>navigate</code> callback you supply, so this library never
+      imports <code>@angular/router</code>. Appears below Actions in the
+      same browse view Recent Searches uses.
     </p>
     <p>
       Press <code>,</code> with an empty, unscoped query to open
-      Settings — a second view in the same palette — where favourites are
-      added, removed, and reordered, and a "Clear recent searches" action
-      lives if that's configured. Settings is reachable only when at
-      least one storage key is set.
+      Settings — favourites are added, removed, and reordered there, and
+      a "Clear recent searches" action appears if that's configured.
     </p>
     <app-doc-code-block [code]="favouritesSnippet" />
   </article>
@@ -138,18 +108,10 @@
   <article>
     <h3>Translatable labels</h3>
     <p>
-      Every piece of UI text the palette and Settings render comes from
-      <code>CmdkLabels</code>, optional and defaulting entirely to English
-      (<code>DEFAULT_CMDK_LABELS</code>). A partial override merges over
-      those defaults, so any key you don't set keeps its English text.
-    </p>
-    <p>
-      Like the storage-key options, <code>labels</code> is a callback, not
-      a static object — read a locale signal inside it and the palette's
-      text switches live, no remount required.
-      <code>favouritesLimitReached</code> is the one label with a
-      <code>%max%</code> token, substituted with the actual favourites cap
-      before it's rendered.
+      Every piece of UI text comes from <code>CmdkLabels</code>, optional
+      and defaulting to English. Like the storage-key options,
+      <code>labels</code> is a callback — read a locale signal inside it
+      and text switches live, no remount required.
     </p>
     <app-doc-code-block [code]="labelsSnippet" />
   </article>
@@ -157,11 +119,10 @@
   <article>
     <h3>CmdkIssueService</h3>
     <p>
-      Every error this library catches — a failing command, a failing or
-      slow search provider, a failing search result — is logged via
-      <code>console.error</code>/<code>console.warn</code> and reported
-      through this service, so you can build your own UI on top instead
-      of the library imposing one.
+      Every error this library catches is logged
+      (<code>console.error</code>/<code>console.warn</code>) and reported
+      through this service, so you can build your own UI instead of the
+      library imposing one.
     </p>
     <app-doc-code-block [code]="cmdkIssueSnippet" />
   </article>

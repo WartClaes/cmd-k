@@ -20,7 +20,7 @@ export class ApiReference {
 }`;
 
   protected readonly registrySnippet = `class CommandRegistryService {
-  register(command: Command): () => void;       // returns an unregister fn
+  register(command: Command): () => void;   // unregister fn — pass to DestroyRef.onDestroy()
   readonly commands: Signal<readonly ResolvedCommand[]>; // all registered, read-only
 }`;
 
@@ -41,14 +41,14 @@ interface SearchProvider {
   key: string;             // e.g. "fruits" — also the "key:" prefix in the input
   label: string;           // chip display text
   icon?: string;
-  search: (query: string) => Promise<SearchResult[]>;
-  resolve?: (resultId: string) => Promise<SearchResult | null>;  // reconstructs a persisted recent
+  search: (query: string) => Promise<SearchResult[]>;   // must resolve within searchTimeoutMs (default 5000) or contributes nothing that round
+  resolve?: (resultId: string) => Promise<SearchResult | null>;  // reconstructs a persisted recent, only when one is actually picked
 }`;
 
   protected readonly searchRegistrySnippet = `class SearchRegistryService {
   register(provider: SearchProvider): () => void;   // throws on duplicate key
   readonly providers: Signal<readonly SearchProvider[]>;
-  search(query: string, scopeKey?: string): Promise<SearchResult[]>;
+  search(query: string, scopeKey?: string): Promise<SearchResult[]>;  // called ~200ms after typing stops
 }`;
 
   protected readonly searchProviderExampleSnippet = `@Component({ selector: 'app-product-search' /* ... */ })
@@ -94,7 +94,7 @@ export class ProductSearch {
   protected readonly recentSearchesSnippet = `function provideCmdk(config?: {
   shortcut?: string;
   searchTimeoutMs?: number;
-  recentSearchesStorageKey?: () => string | null;   // unset = feature is fully off
+  recentSearchesStorageKey?: () => string | null;   // unset = fully off; scope per user, e.g. () => userId() ? 'app-recents-' + userId() : null
 }): EnvironmentProviders;
 
 interface RecentSearchEntry {
@@ -121,7 +121,7 @@ class RecentSearchesService {
 }): EnvironmentProviders;
 
 class FavouritesService {
-  readonly favourites: Signal<readonly { id: string; label: string; path: string }[]>; // capped at 9
+  readonly favourites: Signal<readonly { id: string; label: string; path: string }[]>; // capped at 9 — position assigns mod+1..mod+9
   add(label: string, path: string): void;
   remove(id: string): void;
   moveUp(id: string): void;
@@ -156,6 +156,8 @@ class FavouritesService {
   closeSettings: string;               // "CLOSE SETTINGS"
   keyEscape: string;                   // keycap legend — "Esc"
 }
+
+const DEFAULT_CMDK_LABELS: CmdkLabels;   // the English defaults, exported for reuse
 
 class CmdkLabelsService {
   readonly labels: Signal<CmdkLabels>;
